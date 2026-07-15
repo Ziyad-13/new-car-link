@@ -1,0 +1,6 @@
+{
+  "name": "CarLinkKit Web Manager",
+  "description": "An interactive simulation and administration portal of the Carlinkit web interface (192.168.50.2) featuring real-time telemetry metrics, adjustable buffer and decoding latency settings, flash firmware updating, live hardware diagnostics, and a fully interactive CarPlay and Android Auto sandbox dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

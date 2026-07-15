@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --slate-50: 248 250 252;
+    --slate-100: 241 245 249;
+    --slate-200: 226 232 240;
+    --slate-300: 203 213 225;
+    --slate-400: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-600: 71 85 105;
+    --slate-700: 51 65 85;
+    --slate-800: 30 41 59;
+    --slate-900: 15 23 42;
+    --slate-950: 2 6 23;
+  }
+  
+  .light {
+    --slate-950: 248 250 252;
+    --slate-900: 241 245 249;
+    --slate-800: 226 232 240;
+    --slate-700: 203 213 225;
+    --slate-600: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-400: 71 85 105;
+    --slate-300: 51 65 85;
+    --slate-200: 30 41 59;
+    --slate-100: 15 23 42;
+    --slate-50: 2 6 23;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased font-sans transition-colors duration-300;
+  }
+}
