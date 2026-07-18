@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 jobs:
@@ -60,3 +60,15 @@ jobs:
         with:
           name: CarLinkKit-release
           path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Publish APKs to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          gh release create "$TAG" \
+            android/app/build/outputs/apk/release/app-release.apk \
+            android/app/build/outputs/apk/debug/app-debug.apk \
+            --repo "${{ github.repository }}" \
+            --title "CarLinkKit $TAG" \
+            --notes "Automated CI build"
