@@ -11,12 +11,21 @@ android {
         applicationId = "com.ziyad.carlinkit"
         minSdk = 26
         targetSdk = 33 // Prevents Play Protect warnings on car boxes
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        versionName = "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("persistent") {
+            storeFile = file("carlinkkit.keystore")
+            storePassword = "carlinkkit123"
+            keyAlias = "carlinkkit"
+            keyPassword = "carlinkkit123"
         }
     }
 
@@ -28,7 +37,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug") // Built-in signature for car box installation
+            signingConfig = signingConfigs.getByName("persistent") // Fixed key: same signature on every CI build
         }
     }
     compileOptions {
