@@ -22,8 +22,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val audioPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        systemBridge.localPlayerManager.scanLocalAudio()
+    }
+
     private fun ensureLocationPermission() {
         locationPermissionRequest.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    private fun ensureAudioPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            audioPermissionRequest.launch(arrayOf(android.Manifest.permission.READ_MEDIA_AUDIO))
+        } else {
+            audioPermissionRequest.launch(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE))
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +58,7 @@ class MainActivity : ComponentActivity() {
         }
         
         ensureLocationPermission()
+        ensureAudioPermission()
     }
 
     override fun onResume() {

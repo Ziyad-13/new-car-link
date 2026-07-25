@@ -25,10 +25,19 @@ import kotlinx.coroutines.flow.StateFlow
 class SystemBridge(application: Application) : AndroidViewModel(application), LocationListener {
     @SuppressLint("StaticFieldLeak")
     private val ctx: Context = application.applicationContext
-    
+
     private val locationManager = ctx.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
     private val wifiManager = ctx.getSystemService(Context.WIFI_SERVICE) as? WifiManager
-    
+
+    // Audio DSP & Local Player Engines
+    val audioEngine = AudioEngine(ctx)
+    val localPlayerManager = LocalPlayerManager(ctx, audioEngine)
+
+    val globalDspAvailable: StateFlow<Boolean> = audioEngine.globalDspAvailable
+    val isPlaying: StateFlow<Boolean> = localPlayerManager.isPlaying
+    val currentTrack = localPlayerManager.currentTrack
+    val playbackProgress = localPlayerManager.progress
+
     // Reactive states for driving HUD values
     private val _currentSpeedKmh = MutableStateFlow(0)
     val currentSpeedKmh: StateFlow<Int> = _currentSpeedKmh
@@ -71,7 +80,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
             _gpsStatus.value = "NO_PERMISSION"
         }
     }
-    
+
     @SuppressLint("MissingPermission")
     fun stopLocationUpdates() {
         locationManager?.removeUpdates(this)
@@ -169,7 +178,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
      */
     fun deviceModel(): String = Build.MODEL
     fun androidVersion(): String = Build.VERSION.RELEASE
-    
+
     fun refreshNetworkInfo() {
         _wifiSsidState.value = wifiSsid()
     }
@@ -182,7 +191,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
         return try {
             val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             var ssid = "No Connection"
-            
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 cm?.let {
                     val capabilities = it.getNetworkCapabilities(it.activeNetwork)
@@ -201,7 +210,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
                     ssid = info.ssid
                 }
             }
-            
+
             if (ssid == WifiManager.UNKNOWN_SSID || ssid.isBlank()) {
                 "Unknown WiFi"
             } else if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
@@ -221,9 +230,11 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
         val batteryManager = ctx.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
         return batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: 100
     }
-    
+
     override fun onCleared() {
         super.onCleared()
         stopLocationUpdates()
+        localPlayerManager.release()
+        audioEngine.release()
     }
 }

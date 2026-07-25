@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
@@ -27,12 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
+import com.ziyad.carlinkit.ui.screens.AudioScreen
 import com.ziyad.carlinkit.ui.screens.BootScreen
 import com.ziyad.carlinkit.ui.screens.HomeScreen
+import com.ziyad.carlinkit.ui.screens.MediaScreen
 import com.ziyad.carlinkit.ui.theme.*
 
 enum class Tab {
-    DASHBOARD, APPS
+    DASHBOARD, MEDIA, AUDIO, APPS
 }
 
 @Composable
@@ -47,7 +51,7 @@ fun LauncherApp(bridge: SystemBridge) {
                     .fillMaxSize()
                     .background(SpaceBlack)
             ) {
-                // LEFT SIDEBAR: Ergonomic Dock (always present, designed for 44dp+ thumb ergonomics)
+                // LEFT SIDEBAR: Ergonomic Dock (always present)
                 Column(
                     modifier = Modifier
                         .width(72.dp)
@@ -81,7 +85,7 @@ fun LauncherApp(bridge: SystemBridge) {
 
                     // Middle Navigation Actions
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         SidebarButton(
@@ -89,6 +93,18 @@ fun LauncherApp(bridge: SystemBridge) {
                             label = "Cockpit",
                             isSelected = activeTab == Tab.DASHBOARD,
                             onClick = { activeTab = Tab.DASHBOARD }
+                        )
+                        SidebarButton(
+                            icon = Icons.Default.LibraryMusic,
+                            label = "Media",
+                            isSelected = activeTab == Tab.MEDIA,
+                            onClick = { activeTab = Tab.MEDIA }
+                        )
+                        SidebarButton(
+                            icon = Icons.Default.Equalizer,
+                            label = "Audio DSP",
+                            isSelected = activeTab == Tab.AUDIO,
+                            onClick = { activeTab = Tab.AUDIO }
                         )
                         SidebarButton(
                             icon = Icons.Default.Apps,
@@ -100,7 +116,7 @@ fun LauncherApp(bridge: SystemBridge) {
 
                     // Bottom Utilities Shortcuts (System Actions)
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // System Settings trigger
@@ -129,6 +145,8 @@ fun LauncherApp(bridge: SystemBridge) {
                 ) {
                     when (activeTab) {
                         Tab.DASHBOARD -> HomeScreen(bridge = bridge)
+                        Tab.MEDIA -> MediaScreen(bridge = bridge)
+                        Tab.AUDIO -> AudioScreen(bridge = bridge)
                         Tab.APPS -> AppsScreen(bridge = bridge)
                     }
                 }
@@ -154,14 +172,14 @@ fun SidebarButton(
 ) {
     val bgModifier = if (isSelected) {
         Modifier
-            .size(54.dp)
+            .size(52.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(ElectricBlue.copy(alpha = 0.15f))
             .border(1.2.dp, ElectricBlue, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
     } else {
         Modifier
-            .size(54.dp)
+            .size(52.dp)
             .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
     }
@@ -178,7 +196,7 @@ fun SidebarButton(
                 imageVector = icon,
                 contentDescription = label,
                 tint = if (isSelected) BlueGlow else TextMuted,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
@@ -198,7 +216,7 @@ fun SidebarUtilityButton(
 ) {
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(40.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(BorderSlate.copy(alpha = 0.3f))
             .border(1.dp, BorderSlate.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
@@ -209,7 +227,7 @@ fun SidebarUtilityButton(
             imageVector = icon,
             contentDescription = "Utility Link",
             tint = TextMuted,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(16.dp)
         )
     }
 }

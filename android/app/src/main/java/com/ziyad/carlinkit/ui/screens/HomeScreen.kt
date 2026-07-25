@@ -31,6 +31,8 @@ import android.annotation.SuppressLint
 fun HomeScreen(bridge: SystemBridge) {
     val speed by bridge.currentSpeedKmh.collectAsState()
     val gpsStatus by bridge.gpsStatus.collectAsState()
+    val currentTrack by bridge.currentTrack.collectAsState()
+    val isPlaying by bridge.isPlaying.collectAsState()
     
     var currentTime by remember { mutableStateOf("") }
     var currentDate by remember { mutableStateOf("") }
@@ -166,6 +168,75 @@ fun HomeScreen(bridge: SystemBridge) {
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
+                        }
+                    }
+                }
+            }
+
+            // Cockpit Now Playing Card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(CardDarkBlue)
+                    .border(1.dp, BorderSlate, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(ElectricBlue.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MusicNote,
+                                contentDescription = "Music",
+                                tint = BlueGlow,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = currentTrack?.title ?: "CarLink Player",
+                                color = TextWhite,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = currentTrack?.artist ?: "Local DSP Active",
+                                color = TextMuted,
+                                fontSize = 10.sp,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { bridge.localPlayerManager.previousTrack() }, modifier = Modifier.size(28.dp)) {
+                            Icon(Icons.Default.SkipPrevious, contentDescription = "Prev", tint = TextWhite, modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = { bridge.localPlayerManager.togglePlay() }, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Pause",
+                                tint = BlueGlow,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        IconButton(onClick = { bridge.localPlayerManager.nextTrack() }, modifier = Modifier.size(28.dp)) {
+                            Icon(Icons.Default.SkipNext, contentDescription = "Next", tint = TextWhite, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
