@@ -34,6 +34,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 fun HomeScreen(bridge: SystemBridge) {
     val speed by bridge.currentSpeedKmh.collectAsState()
     val gpsStatus by bridge.gpsStatus.collectAsState()
+    val wifiSsid by bridge.wifiSsidState.collectAsState()
     
     var currentTime by remember { mutableStateOf("") }
     var currentDate by remember { mutableStateOf("") }
@@ -209,11 +210,13 @@ fun HomeScreen(bridge: SystemBridge) {
                     placeholder = { 
                         Text("Search destination query...", color = TextMuted, fontSize = 12.sp) 
                     },
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = Color.Transparent,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        textColor = Color.White
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
                     ),
                     modifier = Modifier.weight(1f)
                 )
@@ -287,7 +290,7 @@ fun HomeScreen(bridge: SystemBridge) {
                         ) {
                             InfoRow(
                                 label = "WLAN SSID", 
-                                value = bridge.wifiSsid(), 
+                                value = wifiSsid, 
                                 icon = Icons.Default.Wifi,
                                 iconColor = BlueGlow
                             )
