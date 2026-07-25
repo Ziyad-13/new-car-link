@@ -149,7 +149,7 @@ class AudioEngine(private val context: Context) {
         // Release any existing local effects
         releaseLocalEffects()
 
-        val activeEq: Equalizer?
+        var activeEq: Equalizer? = null
         try {
             val eq = Equalizer(0, sessionId)
             eq.enabled = true

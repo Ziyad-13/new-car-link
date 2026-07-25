@@ -66,8 +66,6 @@ class LocalPlayerManager(
         exoPlayer = player
 
         player.addListener(object : Player.Listener {
-            onIsPlayingChangedState(player.isPlaying)
-
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 onIsPlayingChangedState(isPlaying)
             }
