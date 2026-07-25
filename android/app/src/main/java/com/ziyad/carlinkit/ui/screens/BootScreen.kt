@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.annotation.SuppressLint
+import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun BootScreen(onBootComplete: () -> Unit) {
@@ -46,6 +50,7 @@ fun BootScreen(onBootComplete: () -> Unit) {
     val statuses = listOf(
         "Initializing Toyota Entune & TSS...",
         "Connecting to Camry CAN-BUS...",
+        "Loading 3D Vehicle Telemetry...",
         "Configuring wireless link channels...",
         "Validating safe driving handshake...",
         "CarPlay link established."
@@ -55,14 +60,14 @@ fun BootScreen(onBootComplete: () -> Unit) {
         launch {
             progressAnim.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 2600, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 10000, easing = FastOutSlowInEasing)
             )
             delay(400)
             onBootComplete()
         }
 
         launch {
-            val stepTime = 2600L / statuses.size
+            val stepTime = 10000L / statuses.size
             for (i in statuses.indices) {
                 statusIndex = i
                 delay(stepTime)
@@ -95,29 +100,9 @@ fun BootScreen(onBootComplete: () -> Unit) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.width(340.dp)
+            modifier = Modifier.width(420.dp)
         ) {
-            // Logo
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .scale(logoScale)
-                    .alpha(logoAlpha)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(CardDarkBlue)
-                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(18.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ElectricBolt,
-                    contentDescription = null,
-                    tint = BlueGlow,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
+            
             // Title
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -209,3 +194,4 @@ fun BootScreen(onBootComplete: () -> Unit) {
         }
     }
 }
+

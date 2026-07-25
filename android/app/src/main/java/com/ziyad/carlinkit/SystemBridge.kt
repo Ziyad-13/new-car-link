@@ -29,19 +29,8 @@ class SystemBridge(private val ctx: Context) : LocationListener {
     private val _gpsStatus = MutableStateFlow("SEARCHING")
     val gpsStatus: StateFlow<String> = _gpsStatus
 
-    private val _wifiSsidState = MutableStateFlow("...")
-    val wifiSsidState: StateFlow<String> = _wifiSsidState
-
     init {
         startLocationUpdates()
-        refreshNetworkInfo()
-    }
-
-    /**
-     * Re-read network info (SSID needs location permission on Android 8+).
-     */
-    fun refreshNetworkInfo() {
-        _wifiSsidState.value = wifiSsid()
     }
 
     /**

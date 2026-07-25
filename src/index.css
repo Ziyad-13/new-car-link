@@ -1,39 +1,95 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Outfit:wght@200;300;400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --slate-50: 248 250 252;
-    --slate-100: 241 245 249;
-    --slate-200: 226 232 240;
-    --slate-300: 203 213 225;
-    --slate-400: 148 163 184;
-    --slate-500: 100 116 139;
-    --slate-600: 71 85 105;
-    --slate-700: 51 65 85;
-    --slate-800: 30 41 59;
-    --slate-900: 15 23 42;
-    --slate-950: 2 6 23;
-  }
-  
-  .light {
-    --slate-950: 248 250 252;
-    --slate-900: 241 245 249;
-    --slate-800: 226 232 240;
-    --slate-700: 203 213 225;
-    --slate-600: 148 163 184;
-    --slate-500: 100 116 139;
-    --slate-400: 71 85 105;
-    --slate-300: 51 65 85;
-    --slate-200: 30 41 59;
-    --slate-100: 15 23 42;
-    --slate-50: 2 6 23;
-  }
-
   body {
-    @apply bg-slate-950 text-slate-100 antialiased font-sans transition-colors duration-300;
+    @apply bg-[#0a0a0a] text-white antialiased m-0 p-0 min-h-screen;
+    font-family: 'Instrument Sans', sans-serif;
   }
 }
+
+@layer components {
+  .screen {
+    width: 800px;
+    height: 480px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+    user-select: none;
+  }
+  
+  .font-serif { font-family: 'Instrument Serif', serif; }
+  .font-sans { font-family: 'Instrument Sans', sans-serif; }
+  .font-outfit { font-family: 'Outfit', sans-serif; }
+  
+  .boot-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    transition: opacity 0.7s ease;
+  }
+  
+  /* 2a Meridian & 1a Gallery */
+  .theme-porcelain-day {
+    --bg: #F6F3EC; --ink: #23281F; --sub: #8A8676; --line: #DDD7C7; --card: #FFFFFF; --map: #EDE8DA; --roads: #DBD5C2; --accent: #5B6C8F;
+  }
+  .theme-porcelain-night {
+    --bg: #191A17; --ink: #ECE8DC; --sub: #8B897D; --line: #33342D; --card: #212220; --map: #1E1F1C; --roads: #2A2B27; --accent: #5B6C8F;
+  }
+  
+  /* 2b Veil */
+  .theme-veil-day {
+    --bg: #E7EBE2; --ink: #26323A; --glass: rgba(255,255,255,0.62); --accent: #4E7E8A; --sub: rgba(38,50,58,0.6); --glass-border: rgba(255,255,255,0.8);
+  }
+  .theme-veil-night {
+    --bg: #101820; --ink: #E6EEF0; --glass: rgba(13,23,29,0.6); --accent: #4E7E8A; --sub: rgba(230,238,240,0.6); --glass-border: rgba(255,255,255,0.05);
+  }
+
+  /* 1b Horizon */
+  .theme-horizon-day {
+    --bg-grad: linear-gradient(135deg, #D8E7ED, #F3EEDF, #EDE4CE); --ink: #26323A; --glass: rgba(255,255,255,0.4); --accent: #4E7E8A; --sub: rgba(38,50,58,0.7); --glass-border: rgba(255,255,255,0.5);
+  }
+  .theme-horizon-night {
+    --bg-grad: linear-gradient(135deg, #0C1219, #15202B, #22323E); --ink: #E6EEF0; --glass: rgba(13,23,29,0.5); --accent: #4E7E8A; --sub: rgba(230,238,240,0.6); --glass-border: rgba(255,255,255,0.05);
+  }
+
+  .glass-panel {
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+  }
+}
+
+@layer utilities {
+  .animate-draw {
+    animation: drawIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .animate-track {
+    animation: trackTight 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .animate-dot {
+    animation: scaleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .animate-fade-in {
+    animation: fadeIn 1s 0.8s both;
+  }
+}
+
+@keyframes drawIn { 0% { width: 0; } 100% { width: 100px; } }
+@keyframes trackTight { 0% { letter-spacing: 0.5em; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
+@keyframes scaleIn { 0% { transform: scale(0); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+@keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+::-webkit-scrollbar { display: none; }
+

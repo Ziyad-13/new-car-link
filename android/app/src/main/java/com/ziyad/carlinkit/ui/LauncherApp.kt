@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
@@ -31,6 +32,7 @@ import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
 import com.ziyad.carlinkit.ui.screens.BootScreen
 import com.ziyad.carlinkit.ui.screens.HomeScreen
+import com.ziyad.carlinkit.ui.screens.MediaScreen
 import com.ziyad.carlinkit.ui.theme.*
 
 @Composable
@@ -95,6 +97,13 @@ fun LauncherApp(bridge: SystemBridge) {
                             isSelected = activeTab == "apps",
                             onClick = { activeTab = "apps" }
                         )
+
+                        SidebarButton(
+                            icon = Icons.Default.PlayArrow,
+                            label = "Media",
+                            isSelected = activeTab == "media",
+                            onClick = { activeTab = "media" }
+                        )
                     }
 
                     // Bottom Utilities Shortcuts (System Actions)
@@ -130,6 +139,7 @@ fun LauncherApp(bridge: SystemBridge) {
                     when (activeTab) {
                         "dashboard" -> HomeScreen(bridge = bridge)
                         "apps" -> AppsScreen(bridge = bridge)
+                        "media" -> MediaScreen(bridge = bridge)
                     }
                 }
             }

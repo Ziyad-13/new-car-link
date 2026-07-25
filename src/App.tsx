@@ -1,354 +1,132 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Compass, Cpu, Layers, Settings, Terminal, ArrowUpCircle, 
-  Smartphone, Zap, Wifi, Tv, HelpCircle, HardDrive, Sun, Moon,
-  Chrome, LogOut, Cloud, RefreshCw
-} from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { Sun, Moon, RotateCw } from "lucide-react";
+import Meridian from "./components/Meridian";
+import Veil from "./components/Veil";
+import Gallery from "./components/Gallery";
+import Horizon from "./components/Horizon";
+import { CarState, ComponentActions } from "./types";
+import { tracks, sources, destinations } from "./data";
+import { APIProvider } from "@vis.gl/react-google-maps";
 
-import { DongleSettings, DeviceStatus, DiagnosticLog, GoogleUserProfile } from "./types";
-import { DEFAULT_SETTINGS, INITIAL_STATUS, SAMPLE_LOGS } from "./data";
-
-import DeviceSimulator from "./components/DeviceSimulator";
-import DashboardTab from "./components/DashboardTab";
-import SettingsTab from "./components/SettingsTab";
-import UpgradeTab from "./components/UpgradeTab";
-import DiagnosticsTab from "./components/DiagnosticsTab";
-import GoogleLoginModal from "./components/GoogleLoginModal";
-import SplashLoader from "./components/SplashLoader";
+const API_KEY =
+  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
+  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
+  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
+  'AIzaSyApKWxXncItYVA7Huhapf85gq64TX4PnU4';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "settings" | "upgrade" | "diagnostics">("dashboard");
-  const [settings, setSettings] = useState<DongleSettings>(DEFAULT_SETTINGS);
-  const [status, setStatus] = useState<DeviceStatus>(INITIAL_STATUS);
-  const [logs, setLogs] = useState<DiagnosticLog[]>(SAMPLE_LOGS);
-
-  // App boot/intro state
-  const [isBootLoaderActive, setIsBootLoaderActive] = useState(true);
-
-  // Google login state
-  const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(() => {
-    const saved = localStorage.getItem("google_user");
-    try {
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+  const [isNight, setIsNight] = useState(false);
+  const [bootStates, setBootStates] = useState<Record<string, boolean>>({
+    meridian: false,
+    veil: false,
+    gallery: false,
+    horizon: false,
   });
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [galleryTab, setGalleryTab] = useState("HOME");
 
-  // Reboot & update syncing
-  const [isRebooting, setIsRebooting] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateProgress, setUpdateProgress] = useState(0);
+  const [speed, setSpeed] = useState(64);
+  const [time, setTime] = useState("");
+  const [etaTime, setEtaTime] = useState("");
+  const [date, setDate] = useState("");
 
-  // Theme management state (with persistence)
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const saved = localStorage.getItem("carlinkkit_theme");
-    return saved === "light" ? "light" : "dark";
-  });
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
+  const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
 
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === "light") {
-      root.classList.add("light");
-    } else {
-      root.classList.remove("light");
-    }
-    localStorage.setItem("carlinkkit_theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    addLog("info", `Display theme manually switched to ${newTheme === "light" ? "HIGH-CONTRAST LIGHT MODE" : "STANDARD AMBIENT DARK MODE"}.`);
-  };
-
-  // Helper to append log item dynamically with current timestamp
-  const addLog = (level: "info" | "warn" | "error" | "debug", message: string) => {
+  const updateClock = () => {
     const now = new Date();
-    const timestamp = now.toLocaleTimeString([], { hour12: false }) + "." + String(now.getMilliseconds()).padStart(3, "0");
-    setLogs((prev) => [
-      { timestamp, level, message },
-      ...prev,
-    ]);
+    setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    const arrival = new Date(now.getTime() + 14 * 60000);
+    setEtaTime(arrival.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    setDate(now.toLocaleDateString("en-US", { month: "short", day: "numeric", weekday: "short" }));
   };
 
-  // Sync settings workMode and wiredConnection changes straight into DeviceStatus state triggers
-  useEffect(() => {
-    if (isRebooting) return;
-    
-    addLog("info", `Syncing adapter workMode → ${settings.workMode.toUpperCase()}`);
-    
-    // Automatically disconnect and reconnect to simulate a seamless transition
-    if (status.connectionState === "connected_phone") {
-      setStatus(prev => ({ ...prev, connectionState: "pairing" }));
-      setTimeout(() => {
-        setStatus(prev => ({ ...prev, connectionState: "connected_phone" }));
-        addLog("info", `Successfully handshaked in ${settings.workMode.toUpperCase()} mode!`);
-      }, 1000);
-    }
-  }, [settings.workMode]);
+  const toggleDayNight = () => setIsNight(!isNight);
+  const togglePlay = () => setIsPlaying(!isPlaying);
+  const nextTrack = () => setCurrentTrackIdx((prev) => (prev + 1) % tracks.length);
+  const prevTrack = () => setCurrentTrackIdx((prev) => (prev - 1 + tracks.length) % tracks.length);
+  const toggleSource = () => setCurrentSourceIdx((prev) => (prev + 1) % sources.length);
+
+  const reboot = (key: string) => {
+    setBootStates((prev) => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setBootStates((prev) => ({ ...prev, [key]: false }));
+    }, 2000);
+  };
+
+  const rebootAll = () => {
+    ['meridian', 'veil', 'gallery', 'horizon'].forEach((k) => reboot(k));
+  };
 
   useEffect(() => {
-    if (settings.wiredConnection) {
-      addLog("warn", "USB host physical override enabled. Forcing raw USB wire stream...");
-    } else {
-      addLog("info", "USB host override disabled. Restoring wireless fallback channels.");
-    }
-  }, [settings.wiredConnection]);
+    updateClock();
+    const interval = setInterval(() => {
+      updateClock();
+      setSpeed((s) => Math.max(0, Math.min(180, s + (Math.random() > 0.5 ? 1 : -1))));
+    }, 1000);
+
+    setTimeout(rebootAll, 100);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const state: CarState = {
+    speed,
+    time,
+    etaTime,
+    date,
+    isNight,
+    isPlaying,
+    currentTrack: tracks[currentTrackIdx],
+    currentSource: sources[currentSourceIdx],
+    destinations,
+    bootStates,
+    galleryTab,
+  };
+
+  const actions: ComponentActions = {
+    toggleDayNight,
+    togglePlay,
+    nextTrack,
+    prevTrack,
+    toggleSource,
+    reboot,
+    rebootAll,
+    setGalleryTab,
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative">
-      
-      {/* Apple-style Bootloader Splash Animation */}
-      <AnimatePresence>
-        {isBootLoaderActive && (
-          <SplashLoader onComplete={() => setIsBootLoaderActive(false)} />
-        )}
-      </AnimatePresence>
-
-      {/* Premium Automotive Status Header */}
-      <header className="bg-slate-900/60 border-b border-slate-800/80 backdrop-blur-md sticky top-0 z-30 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
-          
-          {/* Logo / Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center border border-blue-500/30 shadow-md">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold tracking-tight text-white font-sans uppercase">CarLinkKit</h1>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono font-bold tracking-wider">
-                  192.168.50.2
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500 font-mono leading-none mt-0.5">Automotive Administration & Diagnostics Suite</p>
-            </div>
-          </div>
-
-          {/* Quick Stats Panel & Theme Toggle */}
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-4 sm:gap-6 text-[10px] font-mono text-slate-400">
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-slate-500">Active Vehicle Host</span>
-                <span className="text-slate-200 font-semibold">{status.carBrand} {status.carModel}</span>
-              </div>
-              <div className="w-[1px] h-6 bg-slate-800 hidden sm:block" />
-              
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${status.connectionState === "connected_phone" ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
-                <div className="flex flex-col">
-                  <span className="text-slate-500 leading-none">Bridge Socket</span>
-                  <span className="text-slate-200 leading-none mt-1 font-bold">
-                    {status.connectionState === "connected_phone" ? "CONNECTED" : "AWAITING PAIR"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="w-[1px] h-6 bg-slate-800 hidden xs:block" />
-
-            {/* Replay Boot Animation */}
-            <button
-              id="replay-boot"
-              onClick={() => {
-                setIsBootLoaderActive(true);
-                addLog("info", "Replay of system boot loader start animation triggered.");
-              }}
-              className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 cursor-pointer"
-              title="Replay Start Animation"
-              aria-label="Replay Start Animation"
-            >
-              <RefreshCw className="w-4 h-4 text-blue-500" />
-            </button>
-
-            {/* Accessibility High-Contrast Theme Toggle */}
-            <button
-              id="theme-toggle"
-              onClick={toggleTheme}
-              className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 cursor-pointer"
-              title={theme === "light" ? "Switch to Standard Ambient Dark Mode" : "Switch to High-Contrast Light Mode"}
-              aria-label={theme === "light" ? "Switch to Standard Ambient Dark Mode" : "Switch to High-Contrast Light Mode"}
-            >
-              {theme === "light" ? (
-                <Moon className="w-4 h-4 text-amber-500" />
-              ) : (
-                <Sun className="w-4 h-4 text-amber-400 animate-pulse" />
-              )}
-            </button>
-          </div>
-
+    <APIProvider apiKey={API_KEY} version="weekly">
+      <div className="p-8 flex flex-col gap-12 items-center font-sans pb-24 min-h-screen">
+        {/* Header */}
+        <div className="sticky top-4 z-50 bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 flex gap-6 items-center shadow-2xl">
+          <h1 className="font-bold text-sm tracking-widest text-zinc-400">CARLINKKIT PROTOTYPE</h1>
+          <div className="w-px h-4 bg-white/20"></div>
+          <button
+            onClick={toggleDayNight}
+            className={`flex items-center gap-2 text-sm hover:text-white transition ${
+              isNight ? "text-zinc-400" : "text-zinc-200"
+            }`}
+          >
+            {isNight ? <Moon size={16} /> : <Sun size={16} />}
+            {isNight ? "Night Mode" : "Day Mode"}
+          </button>
+          <button
+            onClick={rebootAll}
+            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition"
+          >
+            <RotateCw size={16} /> Reboot All
+          </button>
         </div>
-      </header>
 
-      {/* Main Workspace Frame */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* LEFT PANEL: Interactive Device Sandbox Simulator (5 cols) */}
-        <section className="lg:col-span-5 h-full flex flex-col gap-6 lg:sticky lg:top-24">
-          <DeviceSimulator 
-            settings={settings}
-            status={status}
-            setStatus={setStatus}
-            addLog={addLog}
-            isRebooting={isRebooting}
-            setIsRebooting={setIsRebooting}
-            isUpdating={isUpdating}
-            updateProgress={updateProgress}
-            googleUser={googleUser}
-            onConnectGoogleClick={() => setIsLoginModalOpen(true)}
-          />
-        </section>
-
-        {/* RIGHT PANEL: Operational Administration Tabs (7 cols) */}
-        <section className="lg:col-span-7 flex flex-col gap-6">
-          
-          {/* Tab Controller Row (Apple Segmented Picker style) */}
-          <div className="flex overflow-x-auto bg-slate-900/80 border border-slate-800/80 rounded-xl p-1 shadow-inner scrollbar-hide backdrop-blur-md">
-            
-            {/* Dashboard tab button */}
-            <button 
-              id="tab-dashboard"
-              onClick={() => setActiveTab("dashboard")}
-              className={`flex-1 py-2 px-4 text-xs font-bold font-sans rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap active:scale-98 cursor-pointer ${
-                activeTab === "dashboard" 
-                  ? "bg-blue-600 text-white shadow-md font-bold border border-blue-500/20" 
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              Telemetry
-            </button>
-
-            {/* Settings tab button */}
-            <button 
-              id="tab-settings"
-              onClick={() => setActiveTab("settings")}
-              className={`flex-1 py-2 px-4 text-xs font-bold font-sans rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap active:scale-98 cursor-pointer ${
-                activeTab === "settings" 
-                  ? "bg-blue-600 text-white shadow-md font-bold border border-blue-500/20" 
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Settings
-            </button>
-
-            {/* Firmware tab button */}
-            <button 
-              id="tab-upgrade"
-              onClick={() => setActiveTab("upgrade")}
-              className={`flex-1 py-2 px-4 text-xs font-bold font-sans rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap active:scale-98 cursor-pointer ${
-                activeTab === "upgrade" 
-                  ? "bg-blue-600 text-white shadow-md font-bold border border-blue-500/20" 
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
-              }`}
-            >
-              <ArrowUpCircle className="w-3.5 h-3.5" />
-              Firmware
-            </button>
-
-            {/* Diagnostics tab button */}
-            <button 
-              id="tab-diagnostics"
-              onClick={() => setActiveTab("diagnostics")}
-              className={`flex-1 py-2 px-4 text-xs font-bold font-sans rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap active:scale-98 cursor-pointer ${
-                activeTab === "diagnostics" 
-                  ? "bg-blue-600 text-white shadow-md font-bold border border-blue-500/20" 
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              Diagnostics
-            </button>
-
-          </div>
-
-          {/* Active Tab Container */}
-          <div className="flex-1 min-h-[480px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="h-full"
-              >
-                {activeTab === "dashboard" && (
-                  <DashboardTab 
-                    status={status} 
-                    settings={settings}
-                    setStatus={setStatus} 
-                    addLog={addLog} 
-                  />
-                )}
-                {activeTab === "settings" && (
-                  <SettingsTab 
-                    settings={settings} 
-                    setSettings={setSettings} 
-                    addLog={addLog} 
-                    googleUser={googleUser}
-                    setGoogleUser={setGoogleUser}
-                    onConnectGoogleClick={() => setIsLoginModalOpen(true)}
-                  />
-                )}
-                {activeTab === "upgrade" && (
-                  <UpgradeTab 
-                    status={status} 
-                    setStatus={setStatus} 
-                    addLog={addLog}
-                    isRebooting={isRebooting}
-                    setIsRebooting={setIsRebooting}
-                    isUpdating={isUpdating}
-                    setIsUpdating={setIsUpdating}
-                    updateProgress={updateProgress}
-                    setUpdateProgress={setUpdateProgress}
-                  />
-                )}
-                {activeTab === "diagnostics" && (
-                  <DiagnosticsTab 
-                    logs={logs} 
-                    setLogs={setLogs} 
-                    addLog={addLog} 
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-        </section>
-
-      </main>
-
-      {/* Footer Branding */}
-      <footer className="mt-12 py-6 border-t border-slate-900/80 bg-slate-950 flex flex-col sm:flex-row justify-between items-center px-6 text-[10px] font-mono text-slate-500 gap-3">
-        <span>© 2026 CarLinkKit Web Services. All rights reserved.</span>
-        <div className="flex gap-4">
-          <a href="#" className="hover:text-slate-400 transition-colors">Documentation</a>
-          <span>•</span>
-          <a href="#" className="hover:text-slate-400 transition-colors">Cloud Portal</a>
-          <span>•</span>
-          <span className="text-slate-600">Built in Cloud Native Workspace</span>
+        {/* The 4 screens grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 mt-4">
+          <Meridian state={state} actions={actions} />
+          <Veil state={state} actions={actions} />
+          <Gallery state={state} actions={actions} />
+          <Horizon state={state} actions={actions} />
         </div>
-      </footer>
-
-      <AnimatePresence>
-        {isLoginModalOpen && (
-          <GoogleLoginModal
-            isOpen={isLoginModalOpen}
-            onClose={() => setIsLoginModalOpen(false)}
-            onLoginSuccess={(profile) => {
-              setGoogleUser(profile);
-              localStorage.setItem("google_user", JSON.stringify(profile));
-            }}
-            addLog={addLog}
-          />
-        )}
-      </AnimatePresence>
-
-    </div>
+      </div>
+    </APIProvider>
   );
 }

@@ -102,13 +102,11 @@ fun AppsScreen(bridge: SystemBridge) {
                     placeholder = { 
                         Text("Search installed...", color = TextMuted, fontSize = 10.sp) 
                     },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
+                    colors = TextFieldDefaults.textFieldColors(
+                        containerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        textColor = Color.White
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )

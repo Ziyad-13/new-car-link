@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CarLinkKit Interactive Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    body { background: #0a0a0a; color: #fff; font-family: 'Instrument Sans', sans-serif; margin: 0; padding: 0; min-height: 100vh; }
+    .screen { width: 800px; height: 480px; border-radius: 16px; overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); user-select: none; }
+    
+    .font-serif { font-family: 'Instrument Serif', serif; }
+    .font-sans { font-family: 'Instrument Sans', sans-serif; }
+    .font-outfit { font-family: 'Outfit', sans-serif; }
+    
+    .boot-overlay { position: absolute; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.7s ease; }
+    
+    ::-webkit-scrollbar { display: none; }
+    
+    /* 2a Meridian & 1a Gallery */
+    .theme-porcelain-day {
+      --bg: #F6F3EC; --ink: #23281F; --sub: #8A8676; --line: #DDD7C7; --card: #FFFFFF; --map: #EDE8DA; --roads: #DBD5C2; --accent: #5B6C8F;
+    }
+    .theme-porcelain-night {
+      --bg: #191A17; --ink: #ECE8DC; --sub: #8B897D; --line: #33342D; --card: #212220; --map: #1E1F1C; --roads: #2A2B27; --accent: #5B6C8F;
+    }
+    
+    /* 2b Veil */
+    .theme-veil-day {
+      --bg: #E7EBE2; --ink: #26323A; --glass: rgba(255,255,255,0.62); --accent: #4E7E8A; --sub: rgba(38,50,58,0.6); --glass-border: rgba(255,255,255,0.8);
+    }
+    .theme-veil-night {
+      --bg: #101820; --ink: #E6EEF0; --glass: rgba(13,23,29,0.6); --accent: #4E7E8A; --sub: rgba(230,238,240,0.6); --glass-border: rgba(255,255,255,0.05);
+    }
+
+    /* 1b Horizon */
+    .theme-horizon-day {
+      --bg-grad: linear-gradient(135deg, #D8E7ED, #F3EEDF, #EDE4CE); --ink: #26323A; --glass: rgba(255,255,255,0.4); --accent: #4E7E8A; --sub: rgba(38,50,58,0.7); --glass-border: rgba(255,255,255,0.5);
+    }
+    .theme-horizon-night {
+      --bg-grad: linear-gradient(135deg, #0C1219, #15202B, #22323E); --ink: #E6EEF0; --glass: rgba(13,23,29,0.5); --accent: #4E7E8A; --sub: rgba(230,238,240,0.6); --glass-border: rgba(255,255,255,0.05);
+    }
+
+    /* Animations */
+    @keyframes drawIn { 0% { width: 0; } 100% { width: 100px; } }
+    .animate-draw { animation: drawIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    
+    @keyframes trackTight { 0% { letter-spacing: 0.5em; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
+    .animate-track { animation: trackTight 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    
+    @keyframes scaleIn { 0% { transform: scale(0); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+    .animate-dot { animation: scaleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    
+    @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+    /* Utilities */
+    .glass-panel { background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px rgba(0,0,0,0.05); }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+  </style>
+</head>
+<body class="bg-[#0a0a0a] text-white">
+  <div id="app" class="p-8 flex flex-col gap-12 items-center font-sans pb-24">
+    <!-- header -->
+    <div class="sticky top-4 z-50 bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 flex gap-6 items-center shadow-2xl">
+      <h1 class="font-bold text-sm tracking-widest text-zinc-400">CARLINKKIT CANVAS</h1>
+      <div class="w-px h-4 bg-white/20"></div>
+      <button @click="toggleDayNight" class="flex items-center gap-2 text-sm hover:text-white transition" :class="isNight ? 'text-zinc-400' : 'text-zinc-200'">
+        <icon :name="isNight ? 'moon' : 'sun'" size="16"></icon> {{ isNight ? 'Night Mode' : 'Day Mode' }}
+      </button>
+      <button @click="rebootAll" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition">
+        <icon name="rotate-cw" size="16"></icon> Reboot All
+      </button>
+    </div>
+
+    <!-- The 4 screens grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-16 mt-4">
+      
+      <!-- 2a: Meridian -->
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-between items-center text-zinc-500 text-sm px-2">
+          <span class="font-bold tracking-widest text-zinc-400">2A / MERIDIAN</span>
+          <button @click="reboot('meridian')" class="hover:text-white transition flex items-center gap-1"><icon name="rotate-cw" size="14"></icon> Replay Boot</button>
+        </div>
+        <div class="screen font-sans" :class="isNight ? 'theme-porcelain-night' : 'theme-porcelain-day'" style="background: var(--bg); color: var(--ink)">
+          <transition name="fade">
+            <div v-if="bootStates.meridian" class="boot-overlay" style="background: var(--bg)">
+              <div class="h-[1px] bg-[var(--line)] animate-draw mb-6"></div>
+              <h1 class="font-serif text-5xl animate-track">CarLinkKit</h1>
+              <p class="text-[10px] tracking-[0.3em] mt-8 font-medium" style="color: var(--sub); animation: fadeIn 1s 0.8s both;">COMPOSED AT 1 : 1.618</p>
+            </div>
+          </transition>
+          
+          <div class="w-full h-full flex" v-show="!bootStates.meridian">
+            <!-- Map 494px -->
+            <div style="width: 494px; background: var(--map); border-right: 1px solid var(--line);" class="relative">
+              <svg class="absolute inset-0 w-full h-full" style="stroke: var(--roads); stroke-width: 12; fill: none; stroke-linecap: round;">
+                <path d="M-50,100 C150,200 200,400 400,300" />
+                <path d="M100,500 C150,400 300,450 500,200" style="stroke: var(--accent); stroke-width: 6;" />
+              </svg>
+              <!-- Search pill -->
+              <div class="absolute top-6 left-6 right-6 h-12 rounded-full flex items-center px-5 shadow-sm" style="background: var(--card); border: 1px solid var(--line);">
+                <icon name="search" size="20" style="color: var(--sub)"></icon>
+                <span class="ml-3 text-sm font-medium" style="color: var(--sub)">Where to?</span>
+              </div>
+              <!-- Dest Chips -->
+              <div class="absolute bottom-6 left-6 right-6 flex flex-col gap-3">
+                <div class="self-start px-4 py-2.5 rounded-[13px] shadow-sm backdrop-blur-md flex flex-col" style="background: var(--card); border: 1px solid var(--line);">
+                  <div class="text-[13px] font-semibold" style="color: var(--accent)">{{ etaTime }} <span class="font-normal" style="color: var(--sub)">arrival</span></div>
+                  <div class="text-sm font-medium mt-0.5">Home · 14 min</div>
+                </div>
+                <div class="flex gap-2">
+                  <button v-for="d in destinations" class="px-4 py-2 rounded-[13px] text-[13px] font-medium flex items-center gap-2 shadow-sm transition active:scale-95" style="background: var(--card); border: 1px solid var(--line);">
+                    <icon :name="d.icon" size="16" style="color: var(--accent)"></icon> {{ d.name }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Info 306px -->
+            <div style="width: 306px; background: var(--bg);" class="flex flex-col">
+              <!-- Major 296px -->
+              <div style="height: 296px; border-bottom: 1px solid var(--line);" class="p-6 flex flex-col justify-between">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-[11px] tracking-[0.2em]" style="color: var(--sub)">CARLINKKIT</span>
+                  <div class="flex gap-2" style="color: var(--sub)">
+                    <icon name="map-pin" size="16"></icon>
+                    <icon name="wifi" size="16"></icon>
+                  </div>
+                </div>
+                <div class="text-center flex flex-col items-center justify-center -mt-4">
+                  <div class="font-serif leading-none" style="font-size: 84px;">{{ speed }}</div>
+                  <div class="text-[11px] font-semibold tracking-widest mt-1" style="color: var(--sub)">KM/H</div>
+                </div>
+                <div class="flex justify-between items-end">
+                  <div>
+                    <div class="font-serif text-3xl leading-none">{{ time }}</div>
+                    <div class="text-[11px] font-medium tracking-wide mt-1.5 uppercase" style="color: var(--sub)">{{ date }}</div>
+                  </div>
+                  <div class="text-right text-[10px] tracking-wide" style="color: var(--sub)">
+                    <div class="mb-0.5">Pixel 8</div>
+                    <div>CamryNet · 84%</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Minor 184px -->
+              <div style="height: 184px;" class="p-6 flex flex-col justify-between">
+                <div class="flex items-center gap-4">
+                  <img :src="currentTrack.cover" class="w-[44px] h-[44px] rounded-[10px] object-cover shadow-sm bg-zinc-200 shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="truncate text-sm font-semibold">{{ currentTrack.title }}</div>
+                    <div class="truncate text-xs mt-0.5" style="color: var(--sub)">{{ currentTrack.artist }}</div>
+                  </div>
+                  <div class="flex gap-3 shrink-0" style="color: var(--ink)">
+                    <button @click="prevTrack"><icon name="skip-back" size="20"></icon></button>
+                    <button @click="togglePlay"><icon :name="isPlaying ? 'pause' : 'play'" size="20"></icon></button>
+                    <button @click="nextTrack"><icon name="skip-forward" size="20"></icon></button>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <button @click="toggleSource" class="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase border transition active:scale-95" style="border-color: var(--line); color: var(--accent)">
+                    {{ currentSource }}
+                  </button>
+                  <div class="flex gap-4" style="color: var(--ink)">
+                    <icon name="phone" size="20"></icon>
+                    <icon name="message-square" size="20"></icon>
+                    <icon name="grid-2x2" size="20" style="color: var(--accent)"></icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2b: Veil -->
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-between items-center text-zinc-500 text-sm px-2">
+          <span class="font-bold tracking-widest text-zinc-400">2B / VEIL</span>
+          <button @click="reboot('veil')" class="hover:text-white transition flex items-center gap-1"><icon name="rotate-cw" size="14"></icon> Replay Boot</button>
+        </div>
+        <div class="screen font-outfit" :class="isNight ? 'theme-veil-night' : 'theme-veil-day'" style="background: var(--bg); color: var(--ink)">
+          <transition name="fade">
+            <div v-if="bootStates.veil" class="boot-overlay" style="background: var(--bg)">
+              <div class="w-3 h-3 rounded-full mb-6 animate-dot" style="background: var(--accent)"></div>
+              <h1 class="text-4xl font-light tracking-[0.2em] animate-track">CARLINKKIT</h1>
+              <p class="text-[10px] tracking-[0.3em] mt-8 uppercase font-medium" style="color: var(--sub); animation: fadeIn 1s 0.8s both;">Navigation First</p>
+            </div>
+          </transition>
+
+          <div class="w-full h-full relative" v-show="!bootStates.veil">
+            <!-- Map Full Bleed -->
+            <svg class="absolute inset-0 w-full h-full" style="stroke: var(--sub); stroke-width: 1.5; fill: none;">
+              <path d="M-100,200 C300,100 400,500 900,300" opacity="0.2" />
+              <path d="M0,400 C200,300 500,600 800,100" style="stroke: var(--accent); stroke-width: 6; stroke-linecap: round;" />
+              <circle cx="450" cy="350" r="8" style="fill: var(--accent); stroke: var(--glass); stroke-width: 4;" />
+            </svg>
+            
+            <!-- Left Overlays -->
+            <div class="absolute top-6 left-6 flex gap-3">
+              <div class="glass-panel px-4 py-2.5 rounded-full text-[11px] font-medium tracking-widest uppercase flex items-center">CarLinkKit</div>
+              <div class="glass-panel w-64 h-10 rounded-full flex items-center px-4 cursor-pointer">
+                <icon name="search" size="16" style="color: var(--sub)"></icon>
+                <span class="ml-3 text-[13px]" style="color: var(--sub)">Search destination...</span>
+              </div>
+            </div>
+            
+            <div class="absolute bottom-6 left-6 flex flex-col gap-3">
+              <div class="glass-panel px-5 py-3 rounded-[16px] self-start">
+                <div class="text-lg font-medium" style="color: var(--accent)">{{ etaTime }}</div>
+                <div class="text-[13px] mt-0.5" style="color: var(--sub)">Arriving Home</div>
+              </div>
+              <div class="flex gap-2">
+                <button v-for="d in destinations" class="glass-panel px-4 py-2 rounded-full text-[12px] font-medium flex items-center gap-2 active:scale-95 transition">
+                  <icon :name="d.icon" size="16" style="color: var(--accent)"></icon> {{ d.name }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Glass Stack (286px) -->
+            <div class="absolute top-6 right-6 bottom-6 w-[286px] flex flex-col gap-3">
+              <!-- Clock Card -->
+              <div class="glass-panel rounded-[20px] p-5 flex justify-between items-center">
+                <div>
+                  <div class="text-2xl font-light">{{ time }}</div>
+                  <div class="text-[11px] font-medium tracking-widest mt-1 uppercase" style="color: var(--sub)">{{ date }}</div>
+                </div>
+                <div class="flex flex-col items-end gap-2" style="color: var(--sub)">
+                  <icon name="wifi" size="16"></icon>
+                  <button @click="toggleSource" class="text-[10px] font-medium tracking-widest uppercase hover:text-[var(--ink)] transition">{{ currentSource }}</button>
+                </div>
+              </div>
+              
+              <!-- Speed Card -->
+              <div class="glass-panel rounded-[20px] p-6 flex flex-col items-center justify-center flex-1">
+                <div class="text-[68px] font-[200] leading-none">{{ speed }}</div>
+                <div class="text-[11px] font-medium tracking-[0.2em] mt-3 uppercase" style="color: var(--sub)">km/h</div>
+              </div>
+
+              <!-- Media Card -->
+              <div class="glass-panel rounded-[20px] p-5">
+                <div class="flex items-center gap-4">
+                  <img :src="currentTrack.cover" class="w-12 h-12 rounded-[12px] object-cover shrink-0" />
+                  <div class="flex-1 min-w-0">
+                    <div class="truncate text-[14px] font-medium">{{ currentTrack.title }}</div>
+                    <div class="truncate text-[12px] mt-0.5" style="color: var(--sub)">{{ currentTrack.artist }}</div>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center mt-5 px-2">
+                  <button @click="prevTrack"><icon name="skip-back" size="20"></icon></button>
+                  <button @click="togglePlay" class="w-10 h-10 rounded-full flex items-center justify-center bg-black/5 dark:bg-white/10 active:scale-95 transition">
+                    <icon :name="isPlaying ? 'pause' : 'play'" size="20" :class="isPlaying ? '' : 'ml-0.5'"></icon>
+                  </button>
+                  <button @click="nextTrack"><icon name="skip-forward" size="20"></icon></button>
+                </div>
+              </div>
+
+              <!-- Apps Strip -->
+              <div class="glass-panel rounded-full h-[60px] px-6 flex justify-between items-center shrink-0">
+                <icon name="navigation" size="20" style="color: var(--accent)"></icon>
+                <icon name="music" size="20" style="color: var(--sub)"></icon>
+                <icon name="phone" size="20" style="color: var(--sub)"></icon>
+                <icon name="message-circle" size="20" style="color: var(--sub)"></icon>
+                <icon name="settings" size="20" style="color: var(--sub)"></icon>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1a: Gallery -->
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-between items-center text-zinc-500 text-sm px-2">
+          <span class="font-bold tracking-widest text-zinc-400">1A / GALLERY</span>
+          <button @click="reboot('gallery')" class="hover:text-white transition flex items-center gap-1"><icon name="rotate-cw" size="14"></icon> Replay Boot</button>
+        </div>
+        <div class="screen font-sans" :class="isNight ? 'theme-porcelain-night' : 'theme-porcelain-day'" style="background: var(--bg); color: var(--ink)">
+          <transition name="fade">
+            <div v-if="bootStates.gallery" class="boot-overlay" style="background: var(--bg)">
+              <h1 class="font-serif text-5xl animate-track">CarLinkKit</h1>
+            </div>
+          </transition>
+
+          <div class="w-full h-full flex flex-col" v-show="!bootStates.gallery">
+            <!-- Header 60px -->
+            <div class="h-[60px] flex px-8 border-b" style="border-color: var(--line)">
+              <div class="flex gap-8 h-full">
+                <button v-for="tab in ['HOME', 'MEDIA', 'NAV']" @click="galleryTab = tab" class="h-full relative text-[11px] font-bold tracking-[0.15em] transition" :style="{ color: galleryTab === tab ? 'var(--ink)' : 'var(--sub)' }">
+                  {{ tab }}
+                  <div v-if="galleryTab === tab" class="absolute bottom-0 left-0 right-0 h-[2px]" style="background: var(--ink)"></div>
+                </button>
+              </div>
+              <div class="ml-auto flex items-center gap-6 text-[12px] font-medium" style="color: var(--sub)">
+                <icon name="bluetooth" size="16"></icon>
+                <span>{{ time }}</span>
+              </div>
+            </div>
+            
+            <!-- Content 420px -->
+            <div class="flex-1 relative overflow-hidden">
+              <!-- HOME Tab -->
+              <transition name="fade">
+                <div v-if="galleryTab === 'HOME'" class="absolute inset-0 p-10 flex">
+                  <div class="w-[40%] flex flex-col justify-center">
+                    <div class="font-serif leading-none" style="font-size: 148px; margin-left: -8px;">{{ speed }}</div>
+                    <div class="text-[13px] font-semibold tracking-widest mt-2" style="color: var(--sub)">KM/H</div>
+                  </div>
+                  <div class="w-[60%] flex flex-col gap-6">
+                    <div class="flex gap-4">
+                       <div class="flex-1 p-5 rounded-[16px] shadow-sm flex items-center gap-4 cursor-pointer active:scale-95 transition" style="background: var(--card); border: 1px solid var(--line);">
+                         <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="background: var(--map); color: var(--accent)"><icon name="navigation" size="20"></icon></div>
+                         <div class="min-w-0"><div class="font-semibold text-[15px] truncate">{{ etaTime }}</div><div class="text-[12px] mt-0.5" style="color: var(--sub)">To Home</div></div>
+                       </div>
+                       <div @click="galleryTab = 'MEDIA'" class="flex-1 p-5 rounded-[16px] shadow-sm flex items-center gap-4 cursor-pointer active:scale-95 transition" style="background: var(--card); border: 1px solid var(--line);">
+                         <div class="w-[40px] h-[40px] rounded-full overflow-hidden bg-zinc-200 flex-shrink-0"><img :src="currentTrack.cover" class="w-full h-full object-cover" /></div>
+                         <div class="min-w-0"><div class="font-semibold text-[14px] truncate">{{ currentTrack.title }}</div><div class="text-[11px] mt-0.5 truncate" style="color: var(--sub)">{{ currentTrack.artist }}</div></div>
+                       </div>
+                    </div>
+                    <div class="flex-1 rounded-[16px] shadow-sm p-6 grid grid-cols-3 gap-y-6" style="background: var(--card); border: 1px solid var(--line);">
+                      <div v-for="icon in ['phone','message-square','radio','calendar','settings','grid-2x2']" class="flex flex-col items-center justify-center gap-2 cursor-pointer transition hover:scale-110 active:scale-95" style="color: var(--ink)">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center border" style="background: var(--bg); border-color: var(--line)"><icon :name="icon" size="20"></icon></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+              
+              <!-- MEDIA Tab -->
+              <transition name="fade">
+                <div v-if="galleryTab === 'MEDIA'" class="absolute inset-0 p-8 flex items-center gap-12">
+                  <div class="w-[260px] h-[260px] rounded-[24px] overflow-hidden shadow-xl bg-zinc-200 flex-shrink-0 border" style="border-color: var(--line)">
+                    <img :src="currentTrack.cover" class="w-full h-full object-cover" />
+                  </div>
+                  <div class="flex-1 flex flex-col">
+                    <div class="font-serif text-[46px] leading-tight">{{ currentTrack.title }}</div>
+                    <div class="text-lg mt-2 font-medium" style="color: var(--sub)">{{ currentTrack.artist }}</div>
+                    
+                    <div class="mt-10 mb-8">
+                      <div class="h-1.5 w-full rounded-full overflow-hidden" style="background: var(--line)">
+                        <div class="h-full rounded-full" style="background: var(--accent); width: 34%;"></div>
+                      </div>
+                      <div class="flex justify-between text-[11px] font-bold tracking-widest mt-3" style="color: var(--sub)">
+                        <span>1:24</span><span>3:42</span>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-6">
+                      <button @click="toggleSource" class="px-4 py-2 rounded-full text-[11px] font-bold tracking-[0.15em] uppercase border transition active:scale-95" style="border-color: var(--line); color: var(--ink)">{{ currentSource }}</button>
+                      <div class="ml-auto flex items-center gap-6">
+                        <button @click="prevTrack" class="p-3 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition"><icon name="skip-back" size="24"></icon></button>
+                        <button @click="togglePlay" class="w-16 h-16 rounded-full flex items-center justify-center shadow-md text-white transition active:scale-95" style="background: var(--accent)">
+                          <icon :name="isPlaying ? 'pause' : 'play'" size="32" :class="isPlaying ? '' : 'ml-1'"></icon>
+                        </button>
+                        <button @click="nextTrack" class="p-3 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition"><icon name="skip-forward" size="24"></icon></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+              
+              <!-- NAV Tab -->
+              <transition name="fade">
+                <div v-if="galleryTab === 'NAV'" class="absolute inset-0 flex items-center justify-center bg-[var(--map)]">
+                  <div class="text-center">
+                    <icon name="navigation" size="32" class="mx-auto mb-4" style="color: var(--accent)"></icon>
+                    <p style="color: var(--sub)" class="text-sm font-medium tracking-widest uppercase">Navigation Component</p>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1b: Horizon -->
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-between items-center text-zinc-500 text-sm px-2">
+          <span class="font-bold tracking-widest text-zinc-400">1B / HORIZON</span>
+          <button @click="reboot('horizon')" class="hover:text-white transition flex items-center gap-1"><icon name="rotate-cw" size="14"></icon> Replay Boot</button>
+        </div>
+        <div class="screen font-outfit" :class="isNight ? 'theme-horizon-night' : 'theme-horizon-day'" style="background: var(--bg-grad); color: var(--ink)">
+          <transition name="fade">
+            <div v-if="bootStates.horizon" class="boot-overlay" style="background: var(--bg-grad)">
+              <h1 class="text-4xl font-light tracking-[0.2em] animate-track">CARLINKKIT</h1>
+            </div>
+          </transition>
+
+          <div class="w-full h-full relative" v-show="!bootStates.horizon">
+            <!-- 196px ultra light speed bottom-left -->
+            <div class="absolute bottom-4 left-10">
+              <div class="text-[196px] font-[200] leading-none tracking-tighter">{{ speed }}</div>
+              <div class="text-[12px] font-medium tracking-[0.3em] uppercase ml-4 -mt-2" style="color: var(--sub)">km/h</div>
+            </div>
+            
+            <!-- Top-Right Glass Shortcut -->
+            <div class="absolute top-8 right-8 glass-panel rounded-full px-5 py-3 flex items-center gap-4 cursor-pointer active:scale-95 transition">
+              <icon name="navigation" size="16" style="color: var(--accent)"></icon>
+              <div class="text-[13px] font-medium">{{ etaTime }} <span style="color: var(--sub)">Home</span></div>
+            </div>
+            
+            <!-- Center-ish Circular App Row -->
+            <div class="absolute top-[160px] right-12 flex gap-4">
+              <div v-for="icon in ['phone', 'message-circle', 'settings']" class="w-14 h-14 rounded-full glass-panel flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition">
+                <icon :name="icon" size="20" style="color: var(--ink)"></icon>
+              </div>
+            </div>
+
+            <!-- Mini-player -->
+            <div class="absolute top-[240px] right-12 glass-panel w-[280px] rounded-[24px] p-4 flex items-center gap-4 cursor-pointer hover:scale-[1.02] transition">
+              <img :src="currentTrack.cover" class="w-14 h-14 rounded-full object-cover shrink-0" />
+              <div class="flex-1 min-w-0">
+                <div class="truncate text-[14px] font-medium">{{ currentTrack.title }}</div>
+                <div class="truncate text-[12px] mt-0.5" style="color: var(--sub)">{{ currentTrack.artist }}</div>
+              </div>
+              <button @click.stop="togglePlay" class="w-10 h-10 rounded-full flex items-center justify-center bg-black/10 dark:bg-white/10 shrink-0 active:scale-95 transition">
+                <icon :name="isPlaying ? 'pause' : 'play'" size="16" :class="isPlaying ? '' : 'ml-0.5'"></icon>
+              </button>
+            </div>
+            
+            <!-- Round Dock Bottom-Right -->
+            <div class="absolute bottom-8 right-8 glass-panel rounded-full h-16 px-6 flex items-center gap-6">
+              <button class="hover:scale-110 transition"><icon name="home" size="20" style="color: var(--ink)"></icon></button>
+              <button class="hover:scale-110 transition"><icon name="map" size="20" style="color: var(--sub)"></icon></button>
+              <button class="hover:scale-110 transition"><icon name="music" size="20" style="color: var(--sub)"></icon></button>
+              <div class="w-px h-6 bg-black/10 dark:bg-white/10"></div>
+              <button @click="toggleDayNight" class="hover:scale-110 transition active:scale-95"><icon :name="isNight ? 'moon' : 'sun'" size="20" style="color: var(--sub)"></icon></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+
+    const Icon = {
+      props: { name: String, size: { type: [String, Number], default: 24 } },
+      setup(props) {
+        const svgContent = computed(() => {
+          const pascal = props.name.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('');
+          const iconNode = window.lucide && window.lucide.icons && window.lucide.icons[pascal];
+          if (iconNode) {
+            const [, attrs, children] = iconNode;
+            const childHtml = children.map(c => {
+              const attrsStr = Object.entries(c[1] || {}).map(([k,v]) => `${k}="${v}"`).join(' ');
+              return `<${c[0]} ${attrsStr}></${c[0]}>`;
+            }).join('');
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${props.size}" height="${props.size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${childHtml}</svg>`;
+          }
+          return `<svg xmlns="http://www.w3.org/2000/svg" width="${props.size}" height="${props.size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/></svg>`;
+        });
+        return { svgContent };
+      },
+      template: `<span class="inline-flex items-center justify-center" v-html="svgContent"></span>`
+    };
+
+    const App = {
+      components: { Icon },
+      setup() {
+        const isNight = ref(false);
+        const bootStates = ref({ meridian: false, veil: false, gallery: false, horizon: false });
+        const galleryTab = ref('HOME');
+        
+        const speed = ref(64);
+        const time = ref('');
+        const etaTime = ref('');
+        const date = ref('');
+        
+        const isPlaying = ref(false);
+        const tracks = [
+          { title: "Golden Hour", artist: "Kacey Musgraves", cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=150&h=150" },
+          { title: "Tidewater", artist: "Lomelda", cover: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&q=80&w=150&h=150" },
+          { title: "Palo Verde", artist: "Devendra Banhart", cover: "https://images.unsplash.com/photo-1453227588063-bb302b62f50b?auto=format&fit=crop&q=80&w=150&h=150" }
+        ];
+        const currentTrackIdx = ref(0);
+        const currentTrack = computed(() => tracks[currentTrackIdx.value]);
+
+        const sources = ["Bluetooth", "USB", "FM"];
+        const currentSourceIdx = ref(0);
+        const currentSource = computed(() => sources[currentSourceIdx.value]);
+
+        const destinations = [
+          { name: 'Home', icon: 'home' },
+          { name: 'Work', icon: 'briefcase' },
+          { name: 'Fuel', icon: 'fuel' }
+        ];
+
+        const updateClock = () => {
+          const now = new Date();
+          time.value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const arrival = new Date(now.getTime() + 14 * 60000);
+          etaTime.value = arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          date.value = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+        };
+
+        const toggleDayNight = () => isNight.value = !isNight.value;
+        const togglePlay = () => isPlaying.value = !isPlaying.value;
+        const nextTrack = () => currentTrackIdx.value = (currentTrackIdx.value + 1) % tracks.length;
+        const prevTrack = () => currentTrackIdx.value = (currentTrackIdx.value - 1 + tracks.length) % tracks.length;
+        const toggleSource = () => currentSourceIdx.value = (currentSourceIdx.value + 1) % sources.length;
+
+        const reboot = (key) => {
+          bootStates.value[key] = true;
+          setTimeout(() => { bootStates.value[key] = false; }, 2000);
+        };
+
+        const rebootAll = () => {
+          Object.keys(bootStates.value).forEach(k => reboot(k));
+        };
+
+        let interval;
+        onMounted(() => {
+          updateClock();
+          interval = setInterval(() => {
+            updateClock();
+            speed.value = Math.max(0, Math.min(180, speed.value + (Math.random() > 0.5 ? 1 : -1)));
+          }, 1000);
+          
+          setTimeout(rebootAll, 100);
+        });
+
+        onUnmounted(() => clearInterval(interval));
+
+        return { 
+          isNight, bootStates, galleryTab, speed, time, etaTime, date, 
+          isPlaying, currentTrack, currentSource, destinations, 
+          toggleDayNight, togglePlay, nextTrack, prevTrack, toggleSource, reboot, rebootAll 
+        };
+      }
+    };
+
+    createApp(App).mount('#app');
+  </script>
+</body>
+</html>
