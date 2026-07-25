@@ -12,9 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.NavigateNext
-import androidx.compose.material.icons.filled.Navigation
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
@@ -32,13 +29,16 @@ import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
 import com.ziyad.carlinkit.ui.screens.BootScreen
 import com.ziyad.carlinkit.ui.screens.HomeScreen
-import com.ziyad.carlinkit.ui.screens.MediaScreen
 import com.ziyad.carlinkit.ui.theme.*
+
+enum class Tab {
+    DASHBOARD, APPS
+}
 
 @Composable
 fun LauncherApp(bridge: SystemBridge) {
     var isBooting by remember { mutableStateOf(true) }
-    var activeTab by remember { mutableStateOf("dashboard") }
+    var activeTab by remember { mutableStateOf(Tab.DASHBOARD) }
 
     CarLinkKitTheme {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -68,7 +68,7 @@ fun LauncherApp(bridge: SystemBridge) {
                                     colors = listOf(ElectricBlue, Color(0xFF1E3A8A))
                                 )
                             )
-                            .clickable { activeTab = "dashboard" },
+                            .clickable { activeTab = Tab.DASHBOARD },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -87,22 +87,14 @@ fun LauncherApp(bridge: SystemBridge) {
                         SidebarButton(
                             icon = Icons.Default.Dashboard,
                             label = "Cockpit",
-                            isSelected = activeTab == "dashboard",
-                            onClick = { activeTab = "dashboard" }
+                            isSelected = activeTab == Tab.DASHBOARD,
+                            onClick = { activeTab = Tab.DASHBOARD }
                         )
-
                         SidebarButton(
                             icon = Icons.Default.Apps,
                             label = "Apps",
-                            isSelected = activeTab == "apps",
-                            onClick = { activeTab = "apps" }
-                        )
-
-                        SidebarButton(
-                            icon = Icons.Default.PlayArrow,
-                            label = "Media",
-                            isSelected = activeTab == "media",
-                            onClick = { activeTab = "media" }
+                            isSelected = activeTab == Tab.APPS,
+                            onClick = { activeTab = Tab.APPS }
                         )
                     }
 
@@ -116,7 +108,6 @@ fun LauncherApp(bridge: SystemBridge) {
                             icon = Icons.Default.Settings,
                             onClick = { bridge.openSettings() }
                         )
-
                         // Wi-Fi system Settings trigger
                         SidebarUtilityButton(
                             icon = Icons.Default.Wifi,
@@ -137,9 +128,8 @@ fun LauncherApp(bridge: SystemBridge) {
                         )
                 ) {
                     when (activeTab) {
-                        "dashboard" -> HomeScreen(bridge = bridge)
-                        "apps" -> AppsScreen(bridge = bridge)
-                        "media" -> MediaScreen(bridge = bridge)
+                        Tab.DASHBOARD -> HomeScreen(bridge = bridge)
+                        Tab.APPS -> AppsScreen(bridge = bridge)
                     }
                 }
             }
@@ -168,6 +158,7 @@ fun SidebarButton(
             .clip(RoundedCornerShape(14.dp))
             .background(ElectricBlue.copy(alpha = 0.15f))
             .border(1.2.dp, ElectricBlue, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
     } else {
         Modifier
             .size(54.dp)

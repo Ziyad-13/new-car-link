@@ -8,11 +8,7 @@ import { CarState, ComponentActions } from "./types";
 import { tracks, sources, destinations } from "./data";
 import { APIProvider } from "@vis.gl/react-google-maps";
 
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  'AIzaSyApKWxXncItYVA7Huhapf85gq64TX4PnU4';
+const API_KEY = (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY || "";
 
 export default function App() {
   const [isNight, setIsNight] = useState(false);
@@ -32,6 +28,10 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
   const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
+
+  if (!API_KEY) {
+    return <div className="p-8 text-white font-sans text-center mt-20 text-xl">Maps key not configured</div>;
+  }
 
   const updateClock = () => {
     const now = new Date();

@@ -24,17 +24,13 @@ import com.ziyad.carlinkit.ui.theme.*
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.annotation.SuppressLint
-import androidx.compose.ui.viewinterop.AndroidView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(bridge: SystemBridge) {
     val speed by bridge.currentSpeedKmh.collectAsState()
     val gpsStatus by bridge.gpsStatus.collectAsState()
-    val wifiSsid by bridge.wifiSsidState.collectAsState()
     
     var currentTime by remember { mutableStateOf("") }
     var currentDate by remember { mutableStateOf("") }
@@ -211,12 +207,10 @@ fun HomeScreen(bridge: SystemBridge) {
                         Text("Search destination query...", color = TextMuted, fontSize = 12.sp) 
                     },
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        focusedTextColor = Color.White, unfocusedTextColor = Color.White
                     ),
                     modifier = Modifier.weight(1f)
                 )
@@ -290,7 +284,7 @@ fun HomeScreen(bridge: SystemBridge) {
                         ) {
                             InfoRow(
                                 label = "WLAN SSID", 
-                                value = wifiSsid, 
+                                value = bridge.wifiSsid(), 
                                 icon = Icons.Default.Wifi,
                                 iconColor = BlueGlow
                             )

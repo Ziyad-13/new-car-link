@@ -1,45 +1,29 @@
 package com.ziyad.carlinkit
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.ziyad.carlinkit.ui.LauncherApp
 
 class MainActivity : ComponentActivity() {
+    private val systemBridge: SystemBridge by viewModels()
     
-    private lateinit var systemBridge: SystemBridge
-
-    private val locationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        if (results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        ) {
+    private val locationPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
             systemBridge.startLocationUpdates()
-            systemBridge.refreshNetworkInfo()
         }
     }
 
     private fun ensureLocationPermission() {
-        val granted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!granted) {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
+        locationPermissionRequest.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,15 +39,11 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
-        // Initialize our system gateway bridge
-        systemBridge = SystemBridge(this)
-
-        // Ask for location access (GPS speed + Wi-Fi SSID)
-        ensureLocationPermission()
-
         setContent {
             LauncherApp(bridge = systemBridge)
         }
+        
+        ensureLocationPermission()
     }
 
     override fun onResume() {
@@ -75,7 +55,11 @@ class MainActivity : ComponentActivity() {
         }
         // Force refresh location listener on resume
         systemBridge.startLocationUpdates()
-        systemBridge.refreshNetworkInfo()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        systemBridge.stopLocationUpdates()
     }
 
     // Overriding back press to prevent exiting the main HOME dashboard
