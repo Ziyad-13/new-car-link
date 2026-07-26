@@ -29,9 +29,8 @@ export default function App() {
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
   const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
 
-  if (!API_KEY) {
-    return <div className="p-8 text-white font-sans text-center mt-20 text-xl">Maps key not configured</div>;
-  }
+  // We'll pass a fallback key to APIProvider so the app still renders without a key
+  const safeApiKey = API_KEY || "fallback_key";
 
   const updateClock = () => {
     const now = new Date();
@@ -96,7 +95,7 @@ export default function App() {
   };
 
   return (
-    <APIProvider apiKey={API_KEY} version="weekly">
+    <APIProvider apiKey={safeApiKey} version="weekly">
       <div className="p-8 flex flex-col gap-12 items-center font-sans pb-24 min-h-screen">
         {/* Header */}
         <div className="sticky top-4 z-50 bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 flex gap-6 items-center shadow-2xl">

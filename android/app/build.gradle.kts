@@ -20,24 +20,15 @@ android {
         }
     }
 
-    signingConfigs {
-        create("persistent") {
-            storeFile = file("carlinkkit.keystore")
-            storePassword = "carlinkkit123"
-            keyAlias = "carlinkkit"
-            keyPassword = "carlinkkit123"
-        }
-    }
-
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("persistent") // Fixed key
+            signingConfig = signingConfigs.getByName("debug") // Built-in signature for car box installation
         }
     }
     compileOptions {
