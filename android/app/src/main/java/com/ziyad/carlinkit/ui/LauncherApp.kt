@@ -32,6 +32,7 @@ import com.ziyad.carlinkit.ui.screens.AppsScreen
 import com.ziyad.carlinkit.ui.screens.AudioScreen
 import com.ziyad.carlinkit.ui.screens.BootScreen
 import com.ziyad.carlinkit.ui.screens.HomeScreen
+import com.ziyad.carlinkit.ui.screens.MeridianScreen
 import com.ziyad.carlinkit.ui.screens.MediaScreen
 import com.ziyad.carlinkit.ui.theme.*
 
@@ -43,6 +44,11 @@ enum class Tab {
 fun LauncherApp(bridge: SystemBridge) {
     var isBooting by remember { mutableStateOf(true) }
     var activeTab by remember { mutableStateOf(Tab.DASHBOARD) }
+    // Meridian day/night: dark between 18:00 and 06:00
+    val isNightMode = remember {
+        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        h >= 18 || h < 6
+    }
 
     CarLinkKitTheme {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -144,7 +150,12 @@ fun LauncherApp(bridge: SystemBridge) {
                         )
                 ) {
                     when (activeTab) {
-                        Tab.DASHBOARD -> HomeScreen(bridge = bridge)
+                        Tab.DASHBOARD -> MeridianScreen(
+                            bridge = bridge,
+                            isNight = isNightMode,
+                            onOpenApps = { activeTab = Tab.APPS },
+                            onOpenMedia = { activeTab = Tab.MEDIA }
+                        )
                         Tab.MEDIA -> MediaScreen(bridge = bridge)
                         Tab.AUDIO -> AudioScreen(bridge = bridge)
                         Tab.APPS -> AppsScreen(bridge = bridge)
