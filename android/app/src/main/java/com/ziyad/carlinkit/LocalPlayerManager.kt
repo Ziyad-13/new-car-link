@@ -57,8 +57,16 @@ class LocalPlayerManager(
     private var progressJob: Job? = null
 
     init {
-        initExoPlayer()
-        scanLocalAudio()
+        try {
+            initExoPlayer()
+        } catch (t: Throwable) {
+            CrashLog.record(context, "initExoPlayer", t)
+        }
+        try {
+            scanLocalAudio()
+        } catch (t: Throwable) {
+            CrashLog.record(context, "scanLocalAudio", t)
+        }
     }
 
     private fun initExoPlayer() {

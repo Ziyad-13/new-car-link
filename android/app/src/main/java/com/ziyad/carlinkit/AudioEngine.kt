@@ -71,7 +71,12 @@ class AudioEngine(private val context: Context) {
         _limiterEnabled.value = prefs.getBoolean("limiter_enabled", true)
         _selectedPresetIndex.value = prefs.getInt("preset_index", -1)
 
-        attemptGlobalDsp()
+        try {
+            attemptGlobalDsp()
+        } catch (t: Throwable) {
+            CrashLog.record(context, "attemptGlobalDsp", t)
+            _globalDspAvailable.value = false
+        }
     }
 
     /**
