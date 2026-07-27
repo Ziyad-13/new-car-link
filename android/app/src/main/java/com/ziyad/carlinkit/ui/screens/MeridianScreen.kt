@@ -104,7 +104,11 @@ fun MeridianScreen(
                 .fillMaxHeight()
                 .background(c.map)
         ) {
-            MapBackdrop(c, latLon, isNight)
+            if (com.ziyad.carlinkit.BuildConfig.MAPS_KEY.isNotBlank()) {
+                GoogleMapPanel(latLon, isNight)
+            } else {
+                MapBackdrop(c, latLon, isNight)
+            }
 
             // Search pill
             Row(
@@ -315,7 +319,57 @@ fun MeridianScreen(
 }
 
 /**
- * Live OpenStreetMap view. Requires no API key, unlike the Google Maps SDK.
+ * Google Maps panel, used when a Maps SDK for Android key is configured.
+ */
+@Composable
+private fun GoogleMapPanel(latLon: Pair<Double, Double>?, isNight: Boolean) {
+    val target = com.google.android.gms.maps.model.LatLng(
+        latLon?.first ?: 24.7136,
+        latLon?.second ?: 46.6753
+    )
+    val cameraPositionState = com.google.maps.android.compose.rememberCameraPositionState {
+        position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(target, 16f)
+    }
+
+    LaunchedEffect(latLon) {
+        latLon?.let { (lat, lon) ->
+            cameraPositionState.position =
+                com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+                    com.google.android.gms.maps.model.LatLng(lat, lon), 16f
+                )
+        }
+    }
+
+    com.google.maps.android.compose.GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        properties = com.google.maps.android.compose.MapProperties(
+            isMyLocationEnabled = false,
+            mapStyleOptions = if (isNight) {
+                com.google.android.gms.maps.model.MapStyleOptions(NIGHT_MAP_STYLE)
+            } else null
+        ),
+        uiSettings = com.google.maps.android.compose.MapUiSettings(
+            zoomControlsEnabled = false,
+            mapToolbarEnabled = false,
+            compassEnabled = false
+        )
+    )
+}
+
+private const val NIGHT_MAP_STYLE = """[
+  {"elementType":"geometry","stylers":[{"color":"#242f3e"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#746855"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#38414e"}]},
+  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#746855"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]},
+  {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]}
+]"""
+
+/**
+ * Live OpenStreetMap view — fallback when no Maps key is configured. Requires no API key, unlike the Google Maps SDK.
  * Follows the GPS position reported by SystemBridge.
  */
 @Composable

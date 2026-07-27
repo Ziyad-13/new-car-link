@@ -15,6 +15,11 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Supplied by the MAPS_API_KEY GitHub secret; empty locally.
+        val mapsKey = System.getenv("MAPS_API_KEY") ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsKey
+        buildConfigField("String", "MAPS_KEY", "\"" + mapsKey + "\"")
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -48,6 +53,7 @@ android {
         jvmTarget = "17"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     composeOptions {
@@ -81,6 +87,10 @@ dependencies {
 
     // OpenStreetMap — real map tiles with no API key required
     implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // Google Maps — used when a Maps SDK for Android key is supplied at build time
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.maps.android:maps-compose:4.3.3")
     
     // System UI Tooling (for development)
     debugImplementation("androidx.compose.ui:ui-tooling")

@@ -29,12 +29,16 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: |
           set -o pipefail
           gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
 
       - name: Build release APK
         working-directory: android
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: |
           set -o pipefail
           gradle assembleRelease --no-daemon 2>&1 | tee -a /tmp/build.log
