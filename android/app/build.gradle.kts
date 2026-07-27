@@ -91,6 +91,9 @@ dependencies {
     // Google Maps — used when a Maps SDK for Android key is supplied at build time
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.3")
+    // play-services-maps pulls in an old fragment; force a version compatible
+    // with registerForActivityResult (lint: InvalidFragmentVersionForActivityResult)
+    implementation("androidx.fragment:fragment-ktx:1.7.1")
     
     // System UI Tooling (for development)
     debugImplementation("androidx.compose.ui:ui-tooling")
