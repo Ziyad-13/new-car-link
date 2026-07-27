@@ -14,6 +14,9 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
@@ -46,12 +49,16 @@ enum class Tab {
 fun LauncherApp(bridge: SystemBridge) {
     var isBooting by remember { mutableStateOf(true) }
     var activeTab by remember { mutableStateOf(Tab.DASHBOARD) }
-    // Meridian day/night: dark between 18:00 and 06:00
-    val isNightMode = remember {
-        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        h >= 18 || h < 6
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        com.ziyad.carlinkit.ui.theme.M.load(ctx)
+        // Re-evaluate AUTO mode every minute without needing a restart
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            com.ziyad.carlinkit.ui.theme.M.clockTick++
+        }
     }
-    com.ziyad.carlinkit.ui.theme.M.isNight = isNightMode
+    val isNightMode = com.ziyad.carlinkit.ui.theme.M.isNight
     val m = if (isNightMode) MeridianNight else MeridianDay
 
     CarLinkKitTheme {
@@ -129,6 +136,19 @@ fun LauncherApp(bridge: SystemBridge) {
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Day / Night / Auto toggle
+                        SidebarUtilityButton(
+                            icon = when (com.ziyad.carlinkit.ui.theme.M.mode) {
+                                com.ziyad.carlinkit.ui.theme.ThemeMode.DAY ->
+                                    Icons.Default.LightMode
+                                com.ziyad.carlinkit.ui.theme.ThemeMode.NIGHT ->
+                                    Icons.Default.DarkMode
+                                com.ziyad.carlinkit.ui.theme.ThemeMode.AUTO ->
+                                    Icons.Default.BrightnessAuto
+                            },
+                            m = m,
+                            onClick = { com.ziyad.carlinkit.ui.theme.M.cycle(ctx) }
+                        )
                         // System Settings trigger
                         SidebarUtilityButton(
                             icon = Icons.Default.Settings,
