@@ -42,6 +42,12 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     private val _currentSpeedKmh = MutableStateFlow(0)
     val currentSpeedKmh: StateFlow<Int> = _currentSpeedKmh
 
+    private val _latLon = MutableStateFlow<Pair<Double, Double>?>(null)
+    val latLon: StateFlow<Pair<Double, Double>?> = _latLon
+
+    private val _bearing = MutableStateFlow(0f)
+    val bearing: StateFlow<Float> = _bearing
+
     private val _gpsStatus = MutableStateFlow("SEARCHING")
     val gpsStatus: StateFlow<String> = _gpsStatus
 
@@ -88,6 +94,8 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
 
     override fun onLocationChanged(location: Location) {
         _gpsStatus.value = "ACTIVE"
+        _latLon.value = location.latitude to location.longitude
+        if (location.hasBearing()) _bearing.value = location.bearing
         if (location.hasSpeed()) {
             // Speed comes in m/s, convert to km/h (speed * 3.6)
             _currentSpeedKmh.value = (location.speed * 3.6f).toInt()

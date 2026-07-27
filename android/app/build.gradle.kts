@@ -78,6 +78,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")
     implementation("androidx.media3:media3-common:1.3.1")
+
+    // OpenStreetMap — real map tiles with no API key required
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
     
     // System UI Tooling (for development)
     debugImplementation("androidx.compose.ui:ui-tooling")

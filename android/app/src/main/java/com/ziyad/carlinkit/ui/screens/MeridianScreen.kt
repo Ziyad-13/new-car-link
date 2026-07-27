@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.MeridianColors
 import com.ziyad.carlinkit.ui.theme.MeridianDay
@@ -74,6 +76,7 @@ fun MeridianScreen(
 
     val speed by bridge.currentSpeedKmh.collectAsState()
     val wifiSsid by bridge.wifiSsidState.collectAsState()
+    val latLon by bridge.latLon.collectAsState()
     val isPlaying by bridge.isPlaying.collectAsState()
     val track by bridge.currentTrack.collectAsState()
 
@@ -101,7 +104,7 @@ fun MeridianScreen(
                 .fillMaxHeight()
                 .background(c.map)
         ) {
-            MapBackdrop(c)
+            MapBackdrop(c, latLon, isNight)
 
             // Search pill
             Row(
@@ -207,13 +210,9 @@ fun MeridianScreen(
                     )
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Column {
-                        Text(time, color = c.ink, fontSize = 28.sp, fontFamily = FontFamily.Serif)
+                        Text(time, color = c.ink, fontSize = 26.sp, fontFamily = FontFamily.Serif)
                         Text(
                             date,
                             color = c.sub,
@@ -223,15 +222,13 @@ fun MeridianScreen(
                             modifier = Modifier.padding(top = 6.dp)
                         )
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(bridge.deviceModel(), color = c.sub, fontSize = 10.sp)
-                        Text(
-                            "$wifiSsid · ${bridge.batteryPercentage()}%",
-                            color = c.sub,
-                            fontSize = 10.sp,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
+                    Text(
+                        "${bridge.deviceModel()} · $wifiSsid",
+                        color = c.sub,
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
 
@@ -318,26 +315,54 @@ fun MeridianScreen(
 }
 
 /**
- * Stylised road grid standing in for the live map.
- * A real Google map needs a Maps SDK for Android key; this keeps the
- * Meridian composition intact until one is configured.
+ * Live OpenStreetMap view. Requires no API key, unlike the Google Maps SDK.
+ * Follows the GPS position reported by SystemBridge.
  */
 @Composable
-private fun MapBackdrop(c: MeridianColors) {
-    Column(Modifier.fillMaxSize()) {
-        repeat(9) { row ->
-            Row(Modifier.weight(1f).fillMaxWidth()) {
-                repeat(9) { col ->
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .background(if ((row + col) % 4 == 0) c.roads else c.map)
+private fun MapBackdrop(c: MeridianColors, latLon: Pair<Double, Double>?, isNight: Boolean) {
+    val context = LocalContext.current
+
+    val mapView = remember {
+        org.osmdroid.config.Configuration.getInstance().apply {
+            userAgentValue = context.packageName
+            osmdroidBasePath = context.filesDir
+            osmdroidTileCache = java.io.File(context.filesDir, "osm_tiles")
+        }
+        org.osmdroid.views.MapView(context).apply {
+            setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
+            setMultiTouchControls(true)
+            zoomController.setVisibility(
+                org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER
+            )
+            controller.setZoom(16.0)
+            // Riyadh as the initial view until the first GPS fix arrives
+            controller.setCenter(org.osmdroid.util.GeoPoint(24.7136, 46.6753))
+            if (isNight) {
+                overlayManager.tilesOverlay.setColorFilter(
+                    android.graphics.ColorMatrixColorFilter(
+                        floatArrayOf(
+                            -1f, 0f, 0f, 0f, 255f,
+                            0f, -1f, 0f, 0f, 255f,
+                            0f, 0f, -1f, 0f, 255f,
+                            0f, 0f, 0f, 1f, 0f
+                        )
                     )
-                }
+                )
             }
         }
     }
+
+    // Recentre whenever a new fix arrives
+    LaunchedEffect(latLon) {
+        latLon?.let { (lat, lon) ->
+            mapView.controller.animateTo(org.osmdroid.util.GeoPoint(lat, lon))
+        }
+    }
+
+    AndroidView(
+        factory = { mapView },
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Composable
