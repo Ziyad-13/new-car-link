@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.SystemBridge
+import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,15 +83,15 @@ fun AppsScreen(bridge: SystemBridge) {
                     .width(260.dp)
                     .height(38.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(CardDarkBlue)
-                    .border(1.dp, BorderSlate, RoundedCornerShape(8.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search icon",
-                    tint = TextMuted,
+                    tint = M.sub,
                     modifier = Modifier.size(16.dp)
                 )
                 
@@ -100,13 +101,13 @@ fun AppsScreen(bridge: SystemBridge) {
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { 
-                        Text("Search installed...", color = TextMuted, fontSize = 10.sp) 
+                        Text("Search installed...", color = M.sub, fontSize = 10.sp) 
                     },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.White, unfocusedTextColor = Color.White
+                        focusedTextColor = M.ink, unfocusedTextColor = M.ink
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -153,8 +154,8 @@ fun AppGridCard(
         modifier = Modifier
             .height(78.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(CardDarkBlue)
-            .border(1.dp, BorderSlate, RoundedCornerShape(12.dp))
+            .background(M.card)
+            .border(1.dp, M.line, RoundedCornerShape(12.dp))
             .clickable(onClick = onLaunch)
             .padding(8.dp),
         contentAlignment = Alignment.Center
@@ -178,7 +179,7 @@ fun AppGridCard(
             ) {
                 Text(
                     text = appName.take(2).uppercase(),
-                    color = Color.White,
+                    color = M.ink,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Black
                 )
@@ -200,7 +201,7 @@ fun AppGridCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = packageName.substringAfterLast("."),
-                    color = TextMuted,
+                    color = M.sub,
                     fontSize = 8.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

@@ -33,6 +33,8 @@ import com.ziyad.carlinkit.ui.screens.AudioScreen
 import com.ziyad.carlinkit.ui.screens.BootScreen
 import com.ziyad.carlinkit.ui.screens.HomeScreen
 import com.ziyad.carlinkit.ui.screens.MeridianScreen
+import com.ziyad.carlinkit.ui.theme.MeridianDay
+import com.ziyad.carlinkit.ui.theme.MeridianNight
 import com.ziyad.carlinkit.ui.screens.MediaScreen
 import com.ziyad.carlinkit.ui.theme.*
 
@@ -49,21 +51,23 @@ fun LauncherApp(bridge: SystemBridge) {
         val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         h >= 18 || h < 6
     }
+    com.ziyad.carlinkit.ui.theme.M.isNight = isNightMode
+    val m = if (isNightMode) MeridianNight else MeridianDay
 
     CarLinkKitTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(SpaceBlack)
+                    .background(m.bg)
             ) {
                 // LEFT SIDEBAR: Ergonomic Dock (always present)
                 Column(
                     modifier = Modifier
                         .width(72.dp)
                         .fillMaxHeight()
-                        .background(CardDarkBlue)
-                        .border(1.dp, BorderSlate)
+                        .background(m.card)
+                        .border(1.dp, m.line)
                         .padding(vertical = 12.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
@@ -73,11 +77,7 @@ fun LauncherApp(bridge: SystemBridge) {
                         modifier = Modifier
                             .size(44.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(ElectricBlue, Color(0xFF1E3A8A))
-                                )
-                            )
+                            .background(m.accent)
                             .clickable { activeTab = Tab.DASHBOARD },
                         contentAlignment = Alignment.Center
                     ) {
@@ -98,24 +98,28 @@ fun LauncherApp(bridge: SystemBridge) {
                             icon = Icons.Default.Dashboard,
                             label = "Cockpit",
                             isSelected = activeTab == Tab.DASHBOARD,
+                            m = m,
                             onClick = { activeTab = Tab.DASHBOARD }
                         )
                         SidebarButton(
                             icon = Icons.Default.LibraryMusic,
                             label = "Media",
                             isSelected = activeTab == Tab.MEDIA,
+                            m = m,
                             onClick = { activeTab = Tab.MEDIA }
                         )
                         SidebarButton(
                             icon = Icons.Default.Equalizer,
                             label = "Audio DSP",
                             isSelected = activeTab == Tab.AUDIO,
+                            m = m,
                             onClick = { activeTab = Tab.AUDIO }
                         )
                         SidebarButton(
                             icon = Icons.Default.Apps,
                             label = "Apps",
                             isSelected = activeTab == Tab.APPS,
+                            m = m,
                             onClick = { activeTab = Tab.APPS }
                         )
                     }
@@ -128,11 +132,13 @@ fun LauncherApp(bridge: SystemBridge) {
                         // System Settings trigger
                         SidebarUtilityButton(
                             icon = Icons.Default.Settings,
+                            m = m,
                             onClick = { bridge.openSettings() }
                         )
                         // Wi-Fi system Settings trigger
                         SidebarUtilityButton(
                             icon = Icons.Default.Wifi,
+                            m = m,
                             onClick = { bridge.openWifi() }
                         )
                     }
@@ -179,14 +185,15 @@ fun SidebarButton(
     icon: ImageVector,
     label: String,
     isSelected: Boolean,
+    m: com.ziyad.carlinkit.ui.theme.MeridianColors,
     onClick: () -> Unit
 ) {
     val bgModifier = if (isSelected) {
         Modifier
             .size(52.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(ElectricBlue.copy(alpha = 0.15f))
-            .border(1.2.dp, ElectricBlue, RoundedCornerShape(14.dp))
+            .background(m.accent.copy(alpha = 0.12f))
+            .border(1.2.dp, m.accent, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
     } else {
         Modifier
@@ -206,13 +213,13 @@ fun SidebarButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) BlueGlow else TextMuted,
+                tint = if (isSelected) m.accent else m.sub,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label,
-                color = if (isSelected) BlueGlow else TextMuted,
+                color = if (isSelected) m.accent else m.sub,
                 fontSize = 8.sp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
             )
@@ -223,21 +230,22 @@ fun SidebarButton(
 @Composable
 fun SidebarUtilityButton(
     icon: ImageVector,
+    m: com.ziyad.carlinkit.ui.theme.MeridianColors,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .size(40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(BorderSlate.copy(alpha = 0.3f))
-            .border(1.dp, BorderSlate.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+            .background(m.line.copy(alpha = 0.35f))
+            .border(1.dp, m.line, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = "Utility Link",
-            tint = TextMuted,
+            tint = m.sub,
             modifier = Modifier.size(16.dp)
         )
     }

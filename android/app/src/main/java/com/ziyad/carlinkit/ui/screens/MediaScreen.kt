@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.LocalTrack
 import com.ziyad.carlinkit.SystemBridge
+import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
 
 @Composable
@@ -57,7 +58,7 @@ fun MediaScreen(bridge: SystemBridge) {
             Icon(
                 imageVector = Icons.Default.LibraryMusic,
                 contentDescription = "Audio System",
-                tint = BlueGlow,
+                tint = M.accent,
                 modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -80,8 +81,8 @@ fun MediaScreen(bridge: SystemBridge) {
                     .weight(0.6f)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(CardDarkBlue)
-                    .border(1.dp, BorderSlate, RoundedCornerShape(24.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(24.dp))
                     .padding(24.dp)
             ) {
                 Column(
@@ -98,7 +99,7 @@ fun MediaScreen(bridge: SystemBridge) {
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(
                                     Brush.linearGradient(
-                                        colors = listOf(ElectricBlue, Color(0xFF6B21A8))
+                                        colors = listOf(M.accent, Color(0xFF6B21A8))
                                     )
                                 ),
                             contentAlignment = Alignment.Center
@@ -106,7 +107,7 @@ fun MediaScreen(bridge: SystemBridge) {
                             Icon(
                                 imageVector = Icons.Default.LibraryMusic,
                                 contentDescription = "Album Art",
-                                tint = Color.White.copy(alpha = 0.6f),
+                                tint = M.ink.copy(alpha = 0.6f),
                                 modifier = Modifier.size(48.dp)
                             )
                         }
@@ -125,7 +126,7 @@ fun MediaScreen(bridge: SystemBridge) {
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = currentTrack?.artist ?: "Local Media Player",
-                                color = BlueGlow,
+                                color = M.accent,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
@@ -134,7 +135,7 @@ fun MediaScreen(bridge: SystemBridge) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = currentTrack?.album ?: "Built-in DSP Engine Active",
-                                color = TextMuted,
+                                color = M.sub,
                                 fontSize = 13.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -150,8 +151,8 @@ fun MediaScreen(bridge: SystemBridge) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = formatMs(currentPosMs), color = TextMuted, fontSize = 12.sp)
-                            Text(text = formatMs(durationMs), color = TextMuted, fontSize = 12.sp)
+                            Text(text = formatMs(currentPosMs), color = M.sub, fontSize = 12.sp)
+                            Text(text = formatMs(durationMs), color = M.sub, fontSize = 12.sp)
                         }
                         Spacer(modifier = Modifier.height(4.dp))
 
@@ -159,9 +160,9 @@ fun MediaScreen(bridge: SystemBridge) {
                             value = progress,
                             onValueChange = { bridge.localPlayerManager.seekTo(it) },
                             colors = SliderDefaults.colors(
-                                thumbColor = ElectricBlue,
-                                activeTrackColor = BlueGlow,
-                                inactiveTrackColor = BorderSlate
+                                thumbColor = M.accent,
+                                activeTrackColor = M.accent,
+                                inactiveTrackColor = M.line
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -176,7 +177,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         Icon(
                             imageVector = Icons.Default.FastRewind,
                             contentDescription = "Rewind",
-                            tint = TextMuted,
+                            tint = M.sub,
                             modifier = Modifier
                                 .size(32.dp)
                                 .clickable { bridge.localPlayerManager.seekTo((progress - 0.1f).coerceAtLeast(0f)) }
@@ -194,14 +195,14 @@ fun MediaScreen(bridge: SystemBridge) {
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(ElectricBlue)
+                                .background(M.accent)
                                 .clickable { bridge.localPlayerManager.togglePlay() },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = Color.White,
+                                tint = M.ink,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
@@ -216,7 +217,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         Icon(
                             imageVector = Icons.Default.FastForward,
                             contentDescription = "Forward",
-                            tint = TextMuted,
+                            tint = M.sub,
                             modifier = Modifier
                                 .size(32.dp)
                                 .clickable { bridge.localPlayerManager.seekTo((progress + 0.1f).coerceAtMost(1f)) }
@@ -234,7 +235,7 @@ fun MediaScreen(bridge: SystemBridge) {
             ) {
                 Text(
                     text = "LOCAL MEDIA TRACKS (${tracks.size})",
-                    color = TextMuted,
+                    color = M.sub,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -265,15 +266,15 @@ fun TrackListItem(track: LocalTrack, isSelected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) ElectricBlue.copy(alpha = 0.18f) else CardDarkBlue)
-            .border(1.dp, if (isSelected) ElectricBlue else BorderSlate, RoundedCornerShape(14.dp))
+            .background(if (isSelected) M.accent.copy(alpha = 0.18f) else M.card)
+            .border(1.dp, if (isSelected) M.accent else M.line, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(12.dp)
     ) {
         Column {
             Text(
                 text = track.title,
-                color = if (isSelected) BlueGlow else TextWhite,
+                color = if (isSelected) M.accent else TextWhite,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -282,7 +283,7 @@ fun TrackListItem(track: LocalTrack, isSelected: Boolean, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "${track.artist} • ${formatMs(track.durationMs)}",
-                color = TextMuted,
+                color = M.sub,
                 fontSize = 11.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

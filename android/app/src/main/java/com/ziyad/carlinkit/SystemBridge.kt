@@ -32,6 +32,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     // Audio DSP & Local Player Engines
     val audioEngine = AudioEngine(ctx)
     val localPlayerManager = LocalPlayerManager(ctx, audioEngine)
+    val externalMedia = ExternalMediaController(ctx).also { it.start() }
 
     val globalDspAvailable: StateFlow<Boolean> = audioEngine.globalDspAvailable
     val isPlaying: StateFlow<Boolean> = localPlayerManager.isPlaying
@@ -242,6 +243,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     override fun onCleared() {
         super.onCleared()
         stopLocationUpdates()
+        try { externalMedia.release() } catch (_: Throwable) {}
         localPlayerManager.release()
         audioEngine.release()
     }

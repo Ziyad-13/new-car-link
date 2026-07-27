@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.SystemBridge
+import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
 
 @Composable
@@ -58,7 +59,7 @@ fun AudioScreen(bridge: SystemBridge) {
                 Icon(
                     imageVector = Icons.Default.Equalizer,
                     contentDescription = "Audio Equalizer",
-                    tint = BlueGlow,
+                    tint = M.accent,
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -103,8 +104,8 @@ fun AudioScreen(bridge: SystemBridge) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(CardDarkBlue)
-                    .border(1.dp, BorderSlate, RoundedCornerShape(12.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(12.dp))
                     .padding(14.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -130,14 +131,14 @@ fun AudioScreen(bridge: SystemBridge) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(CardDarkBlue)
-                .border(1.dp, BorderSlate, RoundedCornerShape(20.dp))
+                .background(M.card)
+                .border(1.dp, M.line, RoundedCornerShape(20.dp))
                 .padding(16.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "GRAPHIC EQUALIZER (${bands.size}-BANDS)",
-                    color = BlueGlow,
+                    color = M.accent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
@@ -147,7 +148,7 @@ fun AudioScreen(bridge: SystemBridge) {
                 if (presets.isNotEmpty()) {
                     Text(
                         text = "PRESETS",
-                        color = TextMuted,
+                        color = M.sub,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
@@ -160,14 +161,14 @@ fun AudioScreen(bridge: SystemBridge) {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) ElectricBlue else BorderSlate.copy(alpha = 0.3f))
-                                    .border(1.dp, if (isSelected) BlueGlow else BorderSlate, RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) M.accent else M.line.copy(alpha = 0.3f))
+                                    .border(1.dp, if (isSelected) M.accent else M.line, RoundedCornerShape(8.dp))
                                     .clickable { bridge.audioEngine.applyPreset(index.toShort()) }
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
                                 Text(
                                     text = name,
-                                    color = if (isSelected) Color.White else TextWhite,
+                                    color = if (isSelected) M.ink else TextWhite,
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -182,7 +183,7 @@ fun AudioScreen(bridge: SystemBridge) {
                 if (bands.isEmpty()) {
                     Text(
                         text = "Initializing Equalizer hardware...",
-                        color = TextMuted,
+                        color = M.sub,
                         fontSize = 12.sp
                     )
                 } else {
@@ -205,7 +206,7 @@ fun AudioScreen(bridge: SystemBridge) {
                                 val dbVal = band.currentLevelMb / 100f
                                 Text(
                                     text = String.format("%+.1f", dbVal),
-                                    color = if (dbVal > 0) BlueGlow else TextMuted,
+                                    color = if (dbVal > 0) M.accent else M.sub,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -221,9 +222,9 @@ fun AudioScreen(bridge: SystemBridge) {
                                         .weight(1f)
                                         .padding(vertical = 4.dp),
                                     colors = SliderDefaults.colors(
-                                        thumbColor = ElectricBlue,
-                                        activeTrackColor = BlueGlow,
-                                        inactiveTrackColor = BorderSlate
+                                        thumbColor = M.accent,
+                                        activeTrackColor = M.accent,
+                                        inactiveTrackColor = M.line
                                     )
                                 )
 
@@ -253,8 +254,8 @@ fun AudioScreen(bridge: SystemBridge) {
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(CardDarkBlue)
-                    .border(1.dp, BorderSlate, RoundedCornerShape(20.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(20.dp))
                     .padding(16.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -267,7 +268,7 @@ fun AudioScreen(bridge: SystemBridge) {
                             Icon(
                                 imageVector = Icons.Default.GraphicEq,
                                 contentDescription = "Bass Boost",
-                                tint = ElectricBlue,
+                                tint = M.accent,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -280,7 +281,7 @@ fun AudioScreen(bridge: SystemBridge) {
                         }
                         Text(
                             text = "${bassBoost / 10}%",
-                            color = BlueGlow,
+                            color = M.accent,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -291,9 +292,9 @@ fun AudioScreen(bridge: SystemBridge) {
                         onValueChange = { bridge.audioEngine.setBassBoost(it.toInt()) },
                         valueRange = 0f..1000f,
                         colors = SliderDefaults.colors(
-                            thumbColor = ElectricBlue,
-                            activeTrackColor = BlueGlow,
-                            inactiveTrackColor = BorderSlate
+                            thumbColor = M.accent,
+                            activeTrackColor = M.accent,
+                            inactiveTrackColor = M.line
                         )
                     )
                 }
@@ -304,8 +305,8 @@ fun AudioScreen(bridge: SystemBridge) {
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(CardDarkBlue)
-                    .border(1.dp, BorderSlate, RoundedCornerShape(20.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(20.dp))
                     .padding(16.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -344,7 +345,7 @@ fun AudioScreen(bridge: SystemBridge) {
                         colors = SliderDefaults.colors(
                             thumbColor = SafetyAmber,
                             activeTrackColor = SafetyAmber,
-                            inactiveTrackColor = BorderSlate
+                            inactiveTrackColor = M.line
                         )
                     )
                 }
@@ -384,8 +385,8 @@ fun AudioScreen(bridge: SystemBridge) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(CardDarkBlue)
-                .border(1.dp, BorderSlate, RoundedCornerShape(20.dp))
+                .background(M.card)
+                .border(1.dp, M.line, RoundedCornerShape(20.dp))
                 .padding(16.dp)
         ) {
             Row(
@@ -418,7 +419,7 @@ fun AudioScreen(bridge: SystemBridge) {
                         )
                         Text(
                             text = "Automatic peak protection via DynamicsProcessing",
-                            color = TextMuted,
+                            color = M.sub,
                             fontSize = 11.sp
                         )
                     }
@@ -430,8 +431,8 @@ fun AudioScreen(bridge: SystemBridge) {
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = EmeraldGreen,
                         checkedTrackColor = EmeraldGreen.copy(alpha = 0.3f),
-                        uncheckedThumbColor = TextMuted,
-                        uncheckedTrackColor = BorderSlate
+                        uncheckedThumbColor = M.sub,
+                        uncheckedTrackColor = M.line
                     )
                 )
             }
