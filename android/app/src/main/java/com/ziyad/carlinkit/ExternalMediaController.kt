@@ -90,6 +90,16 @@ class ExternalMediaController(private val context: Context) {
         }
     }
 
+    private fun appLabel(pkg: String?): String? {
+        if (pkg == null) return null
+        return try {
+            val pm = context.packageManager
+            pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+        } catch (_: Throwable) {
+            pkg
+        }
+    }
+
     private fun publishMetadata(metadata: MediaMetadata?) {
         _title.value = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
         _artist.value = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
