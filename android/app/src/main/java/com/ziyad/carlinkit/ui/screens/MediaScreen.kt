@@ -31,6 +31,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.LocalTrack
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
@@ -44,12 +48,127 @@ fun MediaScreen(bridge: SystemBridge) {
     val durationMs by bridge.localPlayerManager.durationMs.collectAsState()
     val tracks by bridge.localPlayerManager.tracks.collectAsState()
 
+    // External players (Spotify, Bluetooth, YouTube Music …)
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val extTitle by bridge.externalMedia.title.collectAsState()
+    val extArtist by bridge.externalMedia.artist.collectAsState()
+    val extPlaying by bridge.externalMedia.isPlaying.collectAsState()
+    val extSource by bridge.externalMedia.sourceApp.collectAsState()
+    var hasNotifAccess by remember {
+        mutableStateOf(bridge.externalMedia.notificationAccessGranted())
+    }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        // Re-check after returning from the settings screen
+        while (true) {
+            kotlinx.coroutines.delay(1500)
+            val now = bridge.externalMedia.notificationAccessGranted()
+            if (now != hasNotifAccess) {
+                hasNotifAccess = now
+                if (now) bridge.externalMedia.start()
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (!hasNotifAccess) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(M.accent.copy(alpha = 0.10f))
+                    .border(1.dp, M.accent, RoundedCornerShape(14.dp))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "Enable media control",
+                    color = M.ink,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Android requires notification access before this launcher can control Spotify, Bluetooth or other players.",
+                    color = M.sub,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(M.accent)
+                        .clickable {
+                            try {
+                                ctx.startActivity(
+                                    android.content.Intent(
+                                        android.provider.Settings
+                                            .ACTION_NOTIFICATION_LISTENER_SETTINGS
+                                    ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            } catch (_: Throwable) {
+                            }
+                        }
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
+                    Text("OPEN SETTINGS", color = M.card, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        } else if (extTitle != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(14.dp))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    extSource ?: "External player",
+                    color = M.sub,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp
+                )
+                Text(
+                    extTitle ?: "",
+                    color = M.ink,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                Text(extArtist ?: "", color = M.sub, fontSize = 13.sp, maxLines = 1)
+                Row(
+                    modifier = Modifier.padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    Icon(
+                        Icons.Default.SkipPrevious, "Previous", tint = M.ink,
+                        modifier = Modifier.size(34.dp)
+                            .clip(CircleShape)
+                            .clickable { bridge.externalMedia.previous() }
+                    )
+                    Icon(
+                        if (extPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        "Play/Pause", tint = M.accent,
+                        modifier = Modifier.size(34.dp)
+                            .clip(CircleShape)
+                            .clickable { bridge.externalMedia.togglePlayPause() }
+                    )
+                    Icon(
+                        Icons.Default.SkipNext, "Next", tint = M.ink,
+                        modifier = Modifier.size(34.dp)
+                            .clip(CircleShape)
+                            .clickable { bridge.externalMedia.next() }
+                    )
+                }
+            }
+        }
+
         // Top Header
         Row(
             modifier = Modifier.fillMaxWidth(),
