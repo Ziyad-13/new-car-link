@@ -69,13 +69,7 @@ fun AppsScreen(bridge: SystemBridge) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "APPLICATIONS",
-                color = M.ink,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp
-            )
+            Text("Apps", color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
 
             // Minimalist Search Bar
             Row(

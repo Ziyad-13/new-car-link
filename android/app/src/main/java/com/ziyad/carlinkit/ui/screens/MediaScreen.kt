@@ -72,8 +72,8 @@ fun MediaScreen(bridge: SystemBridge) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 20.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (!hasNotifAccess) {
             Column(
@@ -169,25 +169,16 @@ fun MediaScreen(bridge: SystemBridge) {
             }
         }
 
-        // Top Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.LibraryMusic,
-                contentDescription = "Audio System",
-                tint = M.accent,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "النظام الصوتي (AUDIO SYSTEM)",
-                color = M.ink,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
+        // Header — Meridian spec: 17sp bold title, source chips on the right
+        com.ziyad.carlinkit.ui.theme.ScreenHeader(title = "Media") {
+            com.ziyad.carlinkit.ui.theme.MChip(
+                label = extSource ?: "External",
+                selected = extTitle != null
+            ) {}
+            com.ziyad.carlinkit.ui.theme.MChip(
+                label = "Library",
+                selected = extTitle == null
+            ) {}
         }
 
         Row(

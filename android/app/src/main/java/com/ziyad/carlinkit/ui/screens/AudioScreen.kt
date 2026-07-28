@@ -55,22 +55,7 @@ fun AudioScreen(bridge: SystemBridge) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Equalizer,
-                    contentDescription = "Audio Equalizer",
-                    tint = M.accent,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "معالج الصوت DSP (AUDIO DSP ENGINE)",
-                    color = M.ink,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-            }
+            Text("Audio DSP", color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
 
             // Engine Active Status Badge
             Box(
