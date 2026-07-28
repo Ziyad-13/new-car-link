@@ -90,6 +90,9 @@ fun MeridianScreen(
     var showSearch by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var recents by remember { mutableStateOf(loadRecents(context)) }
+    var homeAddr by remember { mutableStateOf(loadPlace(context, "home")) }
+    var workAddr by remember { mutableStateOf(loadPlace(context, "work")) }
+    var editingSlot by remember { mutableStateOf<String?>(null) }
 
     fun go(destination: String) {
         if (destination.isBlank()) return
@@ -99,6 +102,9 @@ fun MeridianScreen(
         query = ""
     }
 
+    // When set, the next voice result fills an editor field instead of navigating
+    var voiceTarget by remember { mutableStateOf<((String) -> Unit)?>(null) }
+
     // Voice input — far easier than typing while driving
     val voiceLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
@@ -106,7 +112,15 @@ fun MeridianScreen(
         val spoken = result.data
             ?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
             ?.firstOrNull()
-        if (!spoken.isNullOrBlank()) go(spoken)
+        if (!spoken.isNullOrBlank()) {
+            val target = voiceTarget
+            if (target != null) {
+                target(spoken)
+                voiceTarget = null
+            } else {
+                go(spoken)
+            }
+        }
     }
 
     fun startVoiceSearch() {
@@ -151,6 +165,24 @@ fun MeridianScreen(
             onPick = { go(it) },
             onVoice = { startVoiceSearch() },
             onDismiss = { showSearch = false }
+        )
+    }
+
+    editingSlot?.let { slot ->
+        PlaceEditorDialog(
+            c = c,
+            slot = slot,
+            initial = if (slot == "home") homeAddr.orEmpty() else workAddr.orEmpty(),
+            onVoice = { onResult ->
+                voiceTarget = onResult
+                startVoiceSearch()
+            },
+            onSave = { value ->
+                savePlace(context, slot, value)
+                if (slot == "home") homeAddr = value else workAddr = value
+                editingSlot = null
+            },
+            onDismiss = { editingSlot = null }
         )
     }
 
@@ -215,9 +247,33 @@ fun MeridianScreen(
                 Spacer(Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DestChip("Home", Icons.Filled.Home, c) { bridge.navigate("home") }
-                    DestChip("Work", Icons.Filled.Work, c) { bridge.navigate("work") }
-                    DestChip("Fuel", Icons.Filled.LocalGasStation, c) { bridge.navigate("gas station") }
+                    DestChip(
+                        label = "Home",
+                        icon = Icons.Filled.Home,
+                        c = c,
+                        onClick = {
+                            if (homeAddr.isNullOrBlank()) editingSlot = "home"
+                            else go(homeAddr!!)
+                        },
+                        onLongClick = { editingSlot = "home" }
+                    )
+                    DestChip(
+                        label = "Work",
+                        icon = Icons.Filled.Work,
+                        c = c,
+                        onClick = {
+                            if (workAddr.isNullOrBlank()) editingSlot = "work"
+                            else go(workAddr!!)
+                        },
+                        onLongClick = { editingSlot = "work" }
+                    )
+                    DestChip(
+                        label = "Fuel",
+                        icon = Icons.Filled.LocalGasStation,
+                        c = c,
+                        onClick = { bridge.navigate("gas station") },
+                        onLongClick = { bridge.navigate("gas station") }
+                    )
                 }
             }
         }
@@ -505,6 +561,106 @@ private fun SearchDialog(
     }
 }
 
+@Composable
+private fun PlaceEditorDialog(
+    c: MeridianColors,
+    slot: String,
+    initial: String,
+    onVoice: (((String) -> Unit)) -> Unit,
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var value by remember { mutableStateOf(initial) }
+    val label = if (slot == "home") "Home" else "Work"
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(c.card)
+                .padding(22.dp)
+        ) {
+            Text("Set $label address", color = c.ink, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Saved once, then one tap navigates there. Long-press the chip to change it later.",
+                color = c.sub,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth()
+                    .height(58.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(c.accent)
+                    .clickable { onVoice { spoken -> value = spoken } },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Filled.Mic, null, tint = c.card, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(10.dp))
+                Text("SPEAK ADDRESS", color = c.card, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+
+            androidx.compose.material3.OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                singleLine = true,
+                placeholder = { Text("Street, district, city", color = c.sub) },
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = c.ink,
+                    unfocusedTextColor = c.ink,
+                    focusedBorderColor = c.accent,
+                    unfocusedBorderColor = c.line,
+                    cursorColor = c.accent
+                ),
+                modifier = Modifier.fillMaxWidth().padding(top = 14.dp)
+            )
+
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "CANCEL",
+                    color = c.sub,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClick = onDismiss)
+                        .padding(horizontal = 18.dp, vertical = 14.dp)
+                )
+                Text(
+                    "SAVE",
+                    color = c.accent,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable { if (value.isNotBlank()) onSave(value) }
+                        .padding(horizontal = 18.dp, vertical = 14.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun loadPlace(context: android.content.Context, slot: String): String? = try {
+    context.getSharedPreferences(RECENTS_PREFS, android.content.Context.MODE_PRIVATE)
+        .getString("place_$slot", null)
+} catch (_: Throwable) {
+    null
+}
+
+private fun savePlace(context: android.content.Context, slot: String, value: String) {
+    try {
+        context.getSharedPreferences(RECENTS_PREFS, android.content.Context.MODE_PRIVATE)
+            .edit().putString("place_$slot", value).apply()
+    } catch (_: Throwable) {
+    }
+}
+
 private const val RECENTS_PREFS = "carlinkkit_nav"
 private const val RECENTS_KEY = "recent_destinations"
 
@@ -658,14 +814,21 @@ private fun MapBackdrop(c: MeridianColors, latLon: Pair<Double, Double>?, isNigh
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DestChip(label: String, icon: ImageVector, c: MeridianColors, onClick: () -> Unit) {
+private fun DestChip(
+    label: String,
+    icon: ImageVector,
+    c: MeridianColors,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = onClick
+) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(13.dp))
             .background(c.card)
             .border(1.dp, c.line, RoundedCornerShape(13.dp))
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
