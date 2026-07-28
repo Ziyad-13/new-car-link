@@ -64,7 +64,7 @@ fun MediaScreen(bridge: SystemBridge) {
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "النظام الصوتي (AUDIO SYSTEM)",
-                color = TextWhite,
+                color = M.ink,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
@@ -117,7 +117,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentTrack?.title ?: "Select a Track",
-                                color = TextWhite,
+                                color = M.ink,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
@@ -185,7 +185,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         Icon(
                             imageVector = Icons.Default.SkipPrevious,
                             contentDescription = "Previous",
-                            tint = TextWhite,
+                            tint = M.ink,
                             modifier = Modifier
                                 .size(38.dp)
                                 .clickable { bridge.localPlayerManager.previousTrack() }
@@ -209,7 +209,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         Icon(
                             imageVector = Icons.Default.SkipNext,
                             contentDescription = "Next",
-                            tint = TextWhite,
+                            tint = M.ink,
                             modifier = Modifier
                                 .size(38.dp)
                                 .clickable { bridge.localPlayerManager.nextTrack() }
@@ -274,7 +274,7 @@ fun TrackListItem(track: LocalTrack, isSelected: Boolean, onClick: () -> Unit) {
         Column {
             Text(
                 text = track.title,
-                color = if (isSelected) M.accent else TextWhite,
+                color = if (isSelected) M.accent else M.ink,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,

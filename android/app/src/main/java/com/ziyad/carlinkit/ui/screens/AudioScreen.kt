@@ -65,7 +65,7 @@ fun AudioScreen(bridge: SystemBridge) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "معالج الصوت DSP (AUDIO DSP ENGINE)",
-                    color = TextWhite,
+                    color = M.ink,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
@@ -118,7 +118,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "System-wide effects are blocked on this device. Use the built-in player for full audio processing.",
-                        color = TextWhite,
+                        color = M.ink,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -168,7 +168,7 @@ fun AudioScreen(bridge: SystemBridge) {
                             ) {
                                 Text(
                                     text = name,
-                                    color = if (isSelected) M.ink else TextWhite,
+                                    color = if (isSelected) M.ink else M.ink,
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -231,7 +231,7 @@ fun AudioScreen(bridge: SystemBridge) {
                                 // Frequency Label
                                 Text(
                                     text = band.formattedFreq,
-                                    color = TextWhite,
+                                    color = M.ink,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -274,7 +274,7 @@ fun AudioScreen(bridge: SystemBridge) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "BASS BOOST",
-                                color = TextWhite,
+                                color = M.ink,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -325,7 +325,7 @@ fun AudioScreen(bridge: SystemBridge) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "LOUDNESS GAIN",
-                                color = TextWhite,
+                                color = M.ink,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -372,7 +372,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "Warning: Raising gain above +5.0 dB reduces headroom and can cause digital clipping/distortion. Enable Limiter below to prevent overload.",
-                        color = TextWhite,
+                        color = M.ink,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -413,7 +413,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     Column {
                         Text(
                             text = "DYNAMICS LIMITER",
-                            color = TextWhite,
+                            color = M.ink,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )

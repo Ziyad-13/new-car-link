@@ -71,7 +71,7 @@ fun AppsScreen(bridge: SystemBridge) {
         ) {
             Text(
                 text = "APPLICATIONS",
-                color = TextWhite,
+                color = M.ink,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.5.sp
@@ -192,7 +192,7 @@ fun AppGridCard(
             ) {
                 Text(
                     text = appName,
-                    color = TextWhite,
+                    color = M.ink,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,

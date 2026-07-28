@@ -77,8 +77,12 @@ fun MeridianScreen(
     val speed by bridge.currentSpeedKmh.collectAsState()
     val wifiSsid by bridge.wifiSsidState.collectAsState()
     val latLon by bridge.latLon.collectAsState()
+    val bearing by bridge.bearing.collectAsState()
     val isPlaying by bridge.isPlaying.collectAsState()
     val track by bridge.currentTrack.collectAsState()
+
+    var showSearch by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
 
     var time by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
@@ -95,6 +99,20 @@ fun MeridianScreen(
         }
     }
 
+    if (showSearch) {
+        SearchDialog(
+            c = c,
+            query = query,
+            onQueryChange = { query = it },
+            onSearch = {
+                if (query.isNotBlank()) bridge.navigate(query)
+                showSearch = false
+                query = ""
+            },
+            onDismiss = { showSearch = false }
+        )
+    }
+
     Row(modifier = Modifier.fillMaxSize().background(c.bg)) {
 
         // ── Map panel ────────────────────────────────────────────────
@@ -105,7 +123,7 @@ fun MeridianScreen(
                 .background(c.map)
         ) {
             if (com.ziyad.carlinkit.BuildConfig.MAPS_KEY.isNotBlank()) {
-                GoogleMapPanel(latLon, isNight)
+                GoogleMapPanel(latLon, bearing, isNight)
             } else {
                 MapBackdrop(c, latLon, isNight)
             }
@@ -120,7 +138,7 @@ fun MeridianScreen(
                     .clip(CircleShape)
                     .background(c.card)
                     .border(1.dp, c.line, CircleShape)
-                    .clickable { bridge.navigate("") }
+                    .clickable { showSearch = true }
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -318,33 +336,122 @@ fun MeridianScreen(
     }
 }
 
+
+@Composable
+private fun SearchDialog(
+    c: MeridianColors,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(c.card)
+                .padding(20.dp)
+        ) {
+            Text("Where to?", color = c.ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(14.dp))
+            androidx.compose.material3.OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                placeholder = { Text("Address or place", color = c.sub) },
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = c.ink,
+                    unfocusedTextColor = c.ink,
+                    focusedBorderColor = c.accent,
+                    unfocusedBorderColor = c.line,
+                    cursorColor = c.accent
+                ),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                ),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                    onSearch = { onSearch() }
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(16.dp))
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "CANCEL",
+                    color = c.sub,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClick = onDismiss)
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+                Text(
+                    "GO",
+                    color = c.accent,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(onClick = onSearch)
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
+        }
+    }
+}
+
 /**
  * Google Maps panel, used when a Maps SDK for Android key is configured.
  */
 @Composable
-private fun GoogleMapPanel(latLon: Pair<Double, Double>?, isNight: Boolean) {
-    val target = com.google.android.gms.maps.model.LatLng(
-        latLon?.first ?: 24.7136,
-        latLon?.second ?: 46.6753
-    )
+private fun GoogleMapPanel(latLon: Pair<Double, Double>?, bearing: Float, isNight: Boolean) {
     val cameraPositionState = com.google.maps.android.compose.rememberCameraPositionState {
-        position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(target, 16f)
+        position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+            com.google.android.gms.maps.model.LatLng(
+                latLon?.first ?: 24.7136,
+                latLon?.second ?: 46.6753
+            ),
+            16f
+        )
     }
 
+    // Follow the car smoothly. Animating (rather than snapping) on every fix
+    // is what removes the stutter — and we skip updates under ~5 m.
+    var lastTarget by remember {
+        mutableStateOf<com.google.android.gms.maps.model.LatLng?>(null)
+    }
     LaunchedEffect(latLon) {
-        latLon?.let { (lat, lon) ->
-            cameraPositionState.position =
-                com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
-                    com.google.android.gms.maps.model.LatLng(lat, lon), 16f
-                )
-        }
+        val ll = latLon ?: return@LaunchedEffect
+        val target = com.google.android.gms.maps.model.LatLng(ll.first, ll.second)
+        val prev = lastTarget
+        val moved = prev == null ||
+            Math.abs(prev.latitude - target.latitude) > 0.00005 ||
+            Math.abs(prev.longitude - target.longitude) > 0.00005
+        if (!moved) return@LaunchedEffect
+        lastTarget = target
+        cameraPositionState.animate(
+            com.google.android.gms.maps.CameraUpdateFactory.newCameraPosition(
+                com.google.android.gms.maps.model.CameraPosition.Builder()
+                    .target(target)
+                    .zoom(16f)
+                    .bearing(bearing)
+                    .tilt(0f)
+                    .build()
+            ),
+            900
+        )
     }
 
     com.google.maps.android.compose.GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         properties = com.google.maps.android.compose.MapProperties(
-            isMyLocationEnabled = false,
+            // Blue dot showing where the car actually is
+            isMyLocationEnabled = true,
+            isBuildingEnabled = false,
+            isTrafficEnabled = false,
             mapStyleOptions = if (isNight) {
                 com.google.android.gms.maps.model.MapStyleOptions(NIGHT_MAP_STYLE)
             } else null
@@ -352,7 +459,10 @@ private fun GoogleMapPanel(latLon: Pair<Double, Double>?, isNight: Boolean) {
         uiSettings = com.google.maps.android.compose.MapUiSettings(
             zoomControlsEnabled = false,
             mapToolbarEnabled = false,
-            compassEnabled = false
+            compassEnabled = false,
+            myLocationButtonEnabled = false,
+            tiltGesturesEnabled = false,
+            rotationGesturesEnabled = false
         )
     )
 }
