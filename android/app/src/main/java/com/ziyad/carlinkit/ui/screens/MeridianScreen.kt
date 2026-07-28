@@ -51,6 +51,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.History
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.MeridianColors
 import com.ziyad.carlinkit.ui.theme.MeridianDay
@@ -65,6 +69,7 @@ import java.util.Locale
  * Meridian cockpit — Compose port of the AI Studio prototype layout:
  * map panel on the left, information column on the right (speed / clock / media).
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MeridianScreen(
     bridge: SystemBridge,
@@ -81,8 +86,45 @@ fun MeridianScreen(
     val isPlaying by bridge.isPlaying.collectAsState()
     val track by bridge.currentTrack.collectAsState()
 
+    val context = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
+    var recents by remember { mutableStateOf(loadRecents(context)) }
+
+    fun go(destination: String) {
+        if (destination.isBlank()) return
+        recents = saveRecent(context, destination)
+        bridge.navigate(destination)
+        showSearch = false
+        query = ""
+    }
+
+    // Voice input — far easier than typing while driving
+    val voiceLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val spoken = result.data
+            ?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+            ?.firstOrNull()
+        if (!spoken.isNullOrBlank()) go(spoken)
+    }
+
+    fun startVoiceSearch() {
+        try {
+            val intent = android.content.Intent(
+                android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH
+            ).apply {
+                putExtra(
+                    android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                )
+                putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "ar-SA")
+                putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "وين تبي تروح؟")
+            }
+            voiceLauncher.launch(intent)
+        } catch (_: Throwable) {
+        }
+    }
 
     var time by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
@@ -103,12 +145,11 @@ fun MeridianScreen(
         SearchDialog(
             c = c,
             query = query,
+            recents = recents,
             onQueryChange = { query = it },
-            onSearch = {
-                if (query.isNotBlank()) bridge.navigate(query)
-                showSearch = false
-                query = ""
-            },
+            onSearch = { go(query) },
+            onPick = { go(it) },
+            onVoice = { startVoiceSearch() },
             onDismiss = { showSearch = false }
         )
     }
@@ -138,7 +179,10 @@ fun MeridianScreen(
                     .clip(CircleShape)
                     .background(c.card)
                     .border(1.dp, c.line, CircleShape)
-                    .clickable { showSearch = true }
+                    .combinedClickable(
+                        onClick = { showSearch = true },
+                        onLongClick = { startVoiceSearch() }
+                    )
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -341,20 +385,79 @@ fun MeridianScreen(
 private fun SearchDialog(
     c: MeridianColors,
     query: String,
+    recents: List<String>,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
+    onPick: (String) -> Unit,
+    onVoice: () -> Unit,
     onDismiss: () -> Unit
 ) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(c.card)
-                .padding(20.dp)
+                .padding(22.dp)
         ) {
-            Text("Where to?", color = c.ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(14.dp))
+            Text("Where to?", color = c.ink, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+
+            // Big voice button — the primary way to search while driving
+            Row(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(c.accent)
+                    .clickable(onClick = onVoice),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Filled.Mic, null, tint = c.card, modifier = Modifier.size(26.dp))
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    "SPEAK DESTINATION",
+                    color = c.card,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+            }
+
+            if (recents.isNotEmpty()) {
+                Text(
+                    "RECENT",
+                    color = c.sub,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+                )
+                recents.take(4).forEach { r ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onPick(r) }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.History, null, tint = c.sub, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Text(r, color = c.ink, fontSize = 15.sp, maxLines = 1)
+                    }
+                }
+            }
+
+            Text(
+                "OR TYPE",
+                color = c.sub,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+            )
             androidx.compose.material3.OutlinedTextField(
                 value = query,
                 onValueChange = onQueryChange,
@@ -375,7 +478,7 @@ private fun SearchDialog(
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(16.dp))
+
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     "CANCEL",
@@ -385,7 +488,7 @@ private fun SearchDialog(
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable(onClick = onDismiss)
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 18.dp, vertical = 14.dp)
                 )
                 Text(
                     "GO",
@@ -395,11 +498,37 @@ private fun SearchDialog(
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable(onClick = onSearch)
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 18.dp, vertical = 14.dp)
                 )
             }
         }
     }
+}
+
+private const val RECENTS_PREFS = "carlinkkit_nav"
+private const val RECENTS_KEY = "recent_destinations"
+
+private fun loadRecents(context: android.content.Context): List<String> = try {
+    context.getSharedPreferences(RECENTS_PREFS, android.content.Context.MODE_PRIVATE)
+        .getString(RECENTS_KEY, "")
+        ?.split("|")
+        ?.filter { it.isNotBlank() }
+        ?: emptyList()
+} catch (_: Throwable) {
+    emptyList()
+}
+
+private fun saveRecent(context: android.content.Context, destination: String): List<String> = try {
+    val updated = (listOf(destination) + loadRecents(context))
+        .distinct()
+        .take(8)
+    context.getSharedPreferences(RECENTS_PREFS, android.content.Context.MODE_PRIVATE)
+        .edit()
+        .putString(RECENTS_KEY, updated.joinToString("|"))
+        .apply()
+    updated
+} catch (_: Throwable) {
+    loadRecents(context)
 }
 
 /**
