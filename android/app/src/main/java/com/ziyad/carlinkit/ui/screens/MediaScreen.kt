@@ -54,6 +54,8 @@ fun MediaScreen(bridge: SystemBridge) {
     val extArtist by bridge.externalMedia.artist.collectAsState()
     val extPlaying by bridge.externalMedia.isPlaying.collectAsState()
     val extSource by bridge.externalMedia.sourceApp.collectAsState()
+    var showDiag by remember { mutableStateOf(false) }
+    var diagText by remember { mutableStateOf("") }
     var hasNotifAccess by remember {
         mutableStateOf(bridge.externalMedia.notificationAccessGranted())
     }
@@ -75,6 +77,46 @@ fun MediaScreen(bridge: SystemBridge) {
             .padding(horizontal = 20.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        if (showDiag) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(10.dp))
+                    .padding(14.dp)
+            ) {
+                Text(
+                    "MEDIA SESSION DIAGNOSTICS",
+                    color = M.sub,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+                Text(
+                    diagText,
+                    color = M.ink,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Row(modifier = Modifier.padding(top = 10.dp)) {
+                    Text(
+                        "REFRESH",
+                        color = M.accent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                bridge.externalMedia.refresh()
+                                diagText = bridge.externalMedia.diagnostics()
+                            }
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    )
+                }
+            }
+        }
+
         if (!hasNotifAccess) {
             Column(
                 modifier = Modifier
@@ -171,6 +213,13 @@ fun MediaScreen(bridge: SystemBridge) {
 
         // Header — Meridian spec: 17sp bold title, source chips on the right
         com.ziyad.carlinkit.ui.theme.ScreenHeader(title = "Media") {
+            com.ziyad.carlinkit.ui.theme.MChip(
+                label = if (showDiag) "Hide info" else "Diagnose",
+                selected = showDiag
+            ) {
+                diagText = bridge.externalMedia.diagnostics()
+                showDiag = !showDiag
+            }
             com.ziyad.carlinkit.ui.theme.MChip(
                 label = extSource ?: "External",
                 selected = extTitle != null

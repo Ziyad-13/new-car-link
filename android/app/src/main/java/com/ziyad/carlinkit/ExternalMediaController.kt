@@ -126,6 +126,52 @@ class ExternalMediaController(private val context: Context) {
 
     fun hasSession(): Boolean = controller != null
 
+    /**
+     * Human-readable dump of every active media session, for on-device
+     * diagnosis — the head unit has no practical access to logcat.
+     */
+    fun diagnostics(): String = buildString {
+        append("Notification access: ")
+        append(if (notificationAccessGranted()) "GRANTED" else "DENIED")
+        append('\n')
+        if (!notificationAccessGranted()) {
+            append("Grant it first - sessions are invisible without it.")
+            return@buildString
+        }
+        try {
+            val mgr = manager ?: (context.getSystemService(Context.MEDIA_SESSION_SERVICE)
+                as? MediaSessionManager)
+            if (mgr == null) {
+                append("MediaSessionManager unavailable")
+                return@buildString
+            }
+            val component = ComponentName(context, MediaNotificationListener::class.java)
+            val sessions = mgr.getActiveSessions(component)
+            append("Active sessions: ").append(sessions.size).append('\n')
+            if (sessions.isEmpty()) {
+                append("\nNo app publishes a media session.\n")
+                append("If Bluetooth audio is playing now, this box\n")
+                append("routes it without a session.")
+            }
+            sessions.forEachIndexed { i, c ->
+                append('\n').append(i + 1).append(". ").append(c.packageName).append('\n')
+                append("   state=").append(c.playbackState?.state?.toString() ?: "null")
+                append("  title=")
+                append(c.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "-")
+                append('\n')
+            }
+            append("\nAttached to: ").append(controller?.packageName ?: "none")
+        } catch (t: Throwable) {
+            append("ERROR: ").append(t.javaClass.simpleName).append(" ").append(t.message)
+        }
+    }
+
+    /** Re-scan for sessions on demand. */
+    fun refresh() {
+        if (!notificationAccessGranted()) return
+        if (manager == null) start() else attachToActiveSession()
+    }
+
     fun notificationAccessGranted(): Boolean = try {
         val enabled = Settings.Secure.getString(
             context.contentResolver, "enabled_notification_listeners"
