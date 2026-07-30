@@ -49,6 +49,7 @@ enum class Tab {
 fun LauncherApp(bridge: SystemBridge) {
     var isBooting by remember { mutableStateOf(true) }
     var activeTab by remember { mutableStateOf(Tab.DASHBOARD) }
+    var fullscreenMap by remember { mutableStateOf(false) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.LaunchedEffect(Unit) {
         com.ziyad.carlinkit.ui.theme.M.load(ctx)
@@ -68,10 +69,10 @@ fun LauncherApp(bridge: SystemBridge) {
                     .fillMaxSize()
                     .background(m.bg)
             ) {
-                // LEFT SIDEBAR: Ergonomic Dock (always present)
-                Column(
+                // LEFT SIDEBAR — hidden while the map is full screen
+                if (!fullscreenMap) Column(
                     modifier = Modifier
-                        .width(72.dp)
+                        .width(64.dp)
                         .fillMaxHeight()
                         .background(m.card)
                         .border(1.dp, m.line)
@@ -180,7 +181,9 @@ fun LauncherApp(bridge: SystemBridge) {
                             bridge = bridge,
                             isNight = isNightMode,
                             onOpenApps = { activeTab = Tab.APPS },
-                            onOpenMedia = { activeTab = Tab.MEDIA }
+                            onOpenMedia = { activeTab = Tab.MEDIA },
+                            fullscreenMap = fullscreenMap,
+                            onToggleFullscreen = { fullscreenMap = !fullscreenMap }
                         )
                         Tab.MEDIA -> MediaScreen(bridge = bridge)
                         Tab.AUDIO -> AudioScreen(bridge = bridge)

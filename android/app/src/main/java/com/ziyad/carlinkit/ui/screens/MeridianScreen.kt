@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.material.icons.filled.OpenInFull
+import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.History
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -75,7 +77,9 @@ fun MeridianScreen(
     bridge: SystemBridge,
     isNight: Boolean,
     onOpenApps: () -> Unit,
-    onOpenMedia: () -> Unit
+    onOpenMedia: () -> Unit,
+    fullscreenMap: Boolean = false,
+    onToggleFullscreen: () -> Unit = {}
 ) {
     val c = if (isNight) MeridianNight else MeridianDay
 
@@ -191,7 +195,7 @@ fun MeridianScreen(
         // ── Map panel ────────────────────────────────────────────────
         Box(
             modifier = Modifier
-                .weight(1.6f)
+                .then(if (fullscreenMap) Modifier.fillMaxSize() else Modifier.weight(1.6f))
                 .fillMaxHeight()
                 .background(c.map)
         ) {
@@ -221,6 +225,52 @@ fun MeridianScreen(
                 Icon(Icons.Filled.Search, null, tint = c.sub, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(12.dp))
                 Text("Where to?", color = c.sub, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            }
+
+            // Expand / collapse the map to the full display
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(14.dp)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(c.card)
+                    .border(1.dp, c.line, CircleShape)
+                    .clickable { onToggleFullscreen() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    if (fullscreenMap) Icons.Filled.CloseFullscreen
+                    else Icons.Filled.OpenInFull,
+                    contentDescription = "Toggle full screen map",
+                    tint = c.ink,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Compact speed readout, shown only when the info column is hidden
+            if (fullscreenMap) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(14.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(c.card)
+                        .border(1.dp, c.line, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        speed.toString(),
+                        color = c.ink,
+                        fontSize = 26.sp,
+                        fontFamily = FontFamily.Serif
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("KM/H", color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(14.dp))
+                    Text(time, color = c.sub, fontSize = 13.sp)
+                }
             }
 
             // ETA card + destination chips
@@ -279,7 +329,7 @@ fun MeridianScreen(
         }
 
         // ── Information column ───────────────────────────────────────
-        Column(
+        if (!fullscreenMap) Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
