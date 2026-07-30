@@ -117,12 +117,46 @@ class ExternalMediaController(private val context: Context) {
     }
 
     fun togglePlayPause() {
-        val c = controller ?: return
-        if (_isPlaying.value) c.transportControls.pause() else c.transportControls.play()
+        val c = controller
+        if (c != null) {
+            if (_isPlaying.value) c.transportControls.pause() else c.transportControls.play()
+        } else {
+            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+            _isPlaying.value = !_isPlaying.value
+        }
     }
 
-    fun next() = controller?.transportControls?.skipToNext()
-    fun previous() = controller?.transportControls?.skipToPrevious()
+    fun next() {
+        val c = controller
+        if (c != null) c.transportControls.skipToNext()
+        else sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_NEXT)
+    }
+
+    fun previous() {
+        val c = controller
+        if (c != null) c.transportControls.skipToPrevious()
+        else sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+    }
+
+    /**
+     * Fallback control path. With no MediaSession to talk to, a media key event
+     * still reaches whatever owns audio focus — on this box, the Bluetooth
+     * AVRCP layer, which forwards it to the phone.
+     */
+    private fun sendMediaKey(keyCode: Int) {
+        try {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            val now = android.os.SystemClock.uptimeMillis()
+            am.dispatchMediaKeyEvent(
+                android.view.KeyEvent(now, now, android.view.KeyEvent.ACTION_DOWN, keyCode, 0)
+            )
+            am.dispatchMediaKeyEvent(
+                android.view.KeyEvent(now, now, android.view.KeyEvent.ACTION_UP, keyCode, 0)
+            )
+        } catch (t: Throwable) {
+            CrashLog.record(context, "sendMediaKey", t)
+        }
+    }
 
     fun hasSession(): Boolean = controller != null
 

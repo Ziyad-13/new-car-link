@@ -34,6 +34,11 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     val localPlayerManager = LocalPlayerManager(ctx, audioEngine)
     val externalMedia = ExternalMediaController(ctx).also { it.start() }
 
+    /** Metadata scraped from Bluetooth notifications when no session exists. */
+    val btTitle = MediaNotificationListener.btTitle
+    val btArtist = MediaNotificationListener.btArtist
+    val btSource = MediaNotificationListener.btSource
+
     val globalDspAvailable: StateFlow<Boolean> = audioEngine.globalDspAvailable
     val isPlaying: StateFlow<Boolean> = localPlayerManager.isPlaying
     val currentTrack = localPlayerManager.currentTrack

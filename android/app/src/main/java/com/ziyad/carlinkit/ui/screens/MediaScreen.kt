@@ -54,6 +54,13 @@ fun MediaScreen(bridge: SystemBridge) {
     val extArtist by bridge.externalMedia.artist.collectAsState()
     val extPlaying by bridge.externalMedia.isPlaying.collectAsState()
     val extSource by bridge.externalMedia.sourceApp.collectAsState()
+    val btTitle by bridge.btTitle.collectAsState()
+    val btArtist by bridge.btArtist.collectAsState()
+    val btSource by bridge.btSource.collectAsState()
+    // Prefer a real MediaSession; fall back to Bluetooth notification metadata
+    val nowTitle = extTitle ?: btTitle
+    val nowArtist = extArtist ?: btArtist
+    val nowSource = extSource ?: btSource
     var showDiag by remember { mutableStateOf(false) }
     var diagText by remember { mutableStateOf("") }
     var hasNotifAccess by remember {
@@ -77,46 +84,6 @@ fun MediaScreen(bridge: SystemBridge) {
             .padding(horizontal = 20.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (showDiag) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(M.card)
-                    .border(1.dp, M.line, RoundedCornerShape(10.dp))
-                    .padding(14.dp)
-            ) {
-                Text(
-                    "MEDIA SESSION DIAGNOSTICS",
-                    color = M.sub,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp
-                )
-                Text(
-                    diagText,
-                    color = M.ink,
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                Row(modifier = Modifier.padding(top = 10.dp)) {
-                    Text(
-                        "REFRESH",
-                        color = M.accent,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                bridge.externalMedia.refresh()
-                                diagText = bridge.externalMedia.diagnostics()
-                            }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
-                    )
-                }
-            }
-        }
-
         if (!hasNotifAccess) {
             Column(
                 modifier = Modifier
@@ -159,7 +126,7 @@ fun MediaScreen(bridge: SystemBridge) {
                     Text("OPEN SETTINGS", color = M.card, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
-        } else if (extTitle != null) {
+        } else if (nowTitle != null) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -169,21 +136,21 @@ fun MediaScreen(bridge: SystemBridge) {
                     .padding(16.dp)
             ) {
                 Text(
-                    extSource ?: "External player",
+                    nowSource ?: "Bluetooth",
                     color = M.sub,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 )
                 Text(
-                    extTitle ?: "",
+                    nowTitle ?: "",
                     color = M.ink,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     modifier = Modifier.padding(top = 6.dp)
                 )
-                Text(extArtist ?: "", color = M.sub, fontSize = 13.sp, maxLines = 1)
+                Text(nowArtist ?: "", color = M.sub, fontSize = 13.sp, maxLines = 1)
                 Row(
                     modifier = Modifier.padding(top = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -221,14 +188,55 @@ fun MediaScreen(bridge: SystemBridge) {
                 showDiag = !showDiag
             }
             com.ziyad.carlinkit.ui.theme.MChip(
-                label = extSource ?: "External",
-                selected = extTitle != null
+                label = nowSource ?: "External",
+                selected = nowTitle != null
             ) {}
             com.ziyad.carlinkit.ui.theme.MChip(
                 label = "Library",
-                selected = extTitle == null
+                selected = nowTitle == null
             ) {}
         }
+
+        if (showDiag) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(M.card)
+                    .border(1.dp, M.line, RoundedCornerShape(10.dp))
+                    .padding(14.dp)
+            ) {
+                Text(
+                    "MEDIA SESSION DIAGNOSTICS",
+                    color = M.sub,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+                Text(
+                    diagText,
+                    color = M.ink,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Row(modifier = Modifier.padding(top = 10.dp)) {
+                    Text(
+                        "REFRESH",
+                        color = M.accent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                bridge.externalMedia.refresh()
+                                diagText = bridge.externalMedia.diagnostics()
+                            }
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    )
+                }
+            }
+        }
+
 
         Row(
             modifier = Modifier.fillMaxSize(),
