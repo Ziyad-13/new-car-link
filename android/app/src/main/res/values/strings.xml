@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CarLinkKit</string>
+
+    <!-- Apps -->
+    <string name="apps_search_placeholder">Search installed…</string>
+    <string name="apps_title">Apps</string>
+
+    <!-- Audio DSP -->
+    <string name="audio_bass_boost">BASS BOOST</string>
+    <string name="audio_blocked_message">System-wide effects are blocked on this device. Use the built-in player for full audio processing.</string>
+    <string name="audio_engine_global">Engine: Global (all apps)</string>
+    <string name="audio_engine_local">Engine: Built-in player only</string>
+    <string name="audio_eq_initializing">Initialising equaliser hardware…</string>
+    <string name="audio_limiter">DYNAMICS LIMITER</string>
+    <string name="audio_limiter_desc">Automatic peak protection via DynamicsProcessing</string>
+    <string name="audio_loudness_gain">LOUDNESS GAIN</string>
+    <string name="audio_loudness_warning">Warning: raising gain above +5.0 dB reduces headroom and can cause clipping. Enable the limiter below to prevent overload.</string>
+    <string name="audio_presets">PRESETS</string>
+    <string name="audio_title">Audio DSP</string>
+
+    <!-- Boot -->
+    <string name="boot_skip">SKIP INTRO</string>
+    <string name="boot_status_display">Preparing display…</string>
+    <string name="boot_status_launcher">Starting launcher…</string>
+    <string name="boot_status_location">Acquiring GPS position…</string>
+    <string name="boot_status_media">Connecting media services…</string>
+    <string name="boot_status_ready">Ready.</string>
+    <string name="boot_status_system">Loading system services…</string>
+    <string name="boot_title">CARLINKKIT</string>
+
+    <!-- Media -->
+    <string name="media_bluetooth">Bluetooth</string>
+    <string name="media_diag_hide">Hide info</string>
+    <string name="media_diag_show">Diagnose</string>
+    <string name="media_diag_title">MEDIA SESSION DIAGNOSTICS</string>
+    <string name="media_external">External</string>
+    <string name="media_library">Library</string>
+    <string name="media_no_track">No track selected</string>
+    <string name="media_open_settings">OPEN SETTINGS</string>
+    <string name="media_permission_body">Android requires notification access before this launcher can control Spotify, Bluetooth or other players.</string>
+    <string name="media_permission_title">Enable media control</string>
+    <string name="media_refresh">REFRESH</string>
+    <string name="media_title">Media</string>
+
+    <!-- Navigation / Meridian -->
+    <string name="nav_address_hint">Street, district, city</string>
+    <string name="nav_arrival">arrival</string>
+    <string name="nav_cancel">CANCEL</string>
+    <string name="nav_fuel">Fuel</string>
+    <string name="nav_go">GO</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_library">LIBRARY</string>
+    <string name="nav_or_type">OR TYPE</string>
+    <string name="nav_place_hint">Address or place</string>
+    <string name="nav_recent">RECENT</string>
+    <string name="nav_saved_place_hint">Saved once, then one tap navigates there. Long-press the chip to change it later.</string>
+    <string name="nav_search_placeholder">Where to?</string>
+    <string name="nav_speak_address">SPEAK ADDRESS</string>
+    <string name="nav_speak_destination">SPEAK DESTINATION</string>
+    <string name="nav_speed_unit">KM/H</string>
+    <string name="nav_voice_prompt">Where do you want to go?</string>
+    <string name="nav_work">Work</string>
+
+    <!-- Diagnostics -->
+    <string name="crash_hint">Photograph this screen and send it for diagnosis.</string>
+    <string name="crash_dismiss">Clear and continue</string>
+    <string name="crash_title">Startup problem detected</string>
+</resources>

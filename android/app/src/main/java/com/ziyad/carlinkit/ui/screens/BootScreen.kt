@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import com.ziyad.carlinkit.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.ui.theme.*
@@ -48,12 +50,12 @@ fun BootScreen(onBootComplete: () -> Unit) {
     )
 
     val statuses = listOf(
-        "Initializing Toyota Entune & TSS...",
-        "Connecting to Camry CAN-BUS...",
-        "Loading 3D Vehicle Telemetry...",
-        "Configuring wireless link channels...",
-        "Validating safe driving handshake...",
-        "CarPlay link established."
+        stringResource(R.string.boot_status_system),
+        stringResource(R.string.boot_status_display),
+        stringResource(R.string.boot_status_location),
+        stringResource(R.string.boot_status_media),
+        stringResource(R.string.boot_status_launcher),
+        stringResource(R.string.boot_status_ready)
     )
 
     LaunchedEffect(Unit) {
@@ -89,7 +91,7 @@ fun BootScreen(onBootComplete: () -> Unit) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "SKIP INTRO",
+                text = stringResource(R.string.boot_skip),
                 color = TextMuted,
                 fontSize = 10.sp,
                 letterSpacing = 1.sp,
@@ -109,7 +111,7 @@ fun BootScreen(onBootComplete: () -> Unit) {
                 modifier = Modifier.alpha(logoAlpha)
             ) {
                 Text(
-                    text = "CARLINKKIT",
+                    text = stringResource(R.string.boot_title),
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Black,
@@ -124,7 +126,7 @@ fun BootScreen(onBootComplete: () -> Unit) {
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "CAMRY_2023",
+                        text = stringResource(R.string.app_name),
                         color = BlueGlow,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
@@ -188,9 +190,7 @@ fun BootScreen(onBootComplete: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("TOYOTA OBD BRIDGE", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.sp)
-            Text("•", color = BorderSlate, fontSize = 9.sp)
-            Text("TSS 2.5 ACTIVE", color = TextMuted, fontSize = 9.sp, letterSpacing = 1.sp)
+            Text(stringResource(R.string.boot_status_ready), color = TextMuted, fontSize = 9.sp, letterSpacing = 1.sp)
         }
     }
 }

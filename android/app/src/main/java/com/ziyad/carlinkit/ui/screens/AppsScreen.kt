@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ziyad.carlinkit.R
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
@@ -69,7 +71,7 @@ fun AppsScreen(bridge: SystemBridge) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Apps", color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.apps_title), color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
 
             // Minimalist Search Bar
             Row(
@@ -95,7 +97,7 @@ fun AppsScreen(bridge: SystemBridge) {
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { 
-                        Text("Search installed...", color = M.sub, fontSize = 10.sp) 
+                        Text(stringResource(R.string.apps_search_placeholder), color = M.sub, fontSize = 10.sp) 
                     },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,

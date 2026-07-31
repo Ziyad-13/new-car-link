@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
@@ -57,6 +58,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.History
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import com.ziyad.carlinkit.R
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.MeridianColors
 import com.ziyad.carlinkit.ui.theme.MeridianDay
@@ -137,7 +139,7 @@ fun MeridianScreen(
                     android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
                 )
                 putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "ar-SA")
-                putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "وين تبي تروح؟")
+                putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Where do you want to go?")
             }
             voiceLauncher.launch(intent)
         } catch (_: Throwable) {
@@ -224,7 +226,7 @@ fun MeridianScreen(
             ) {
                 Icon(Icons.Filled.Search, null, tint = c.sub, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(12.dp))
-                Text("Where to?", color = c.sub, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.nav_search_placeholder), color = c.sub, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             }
 
             // Expand / collapse the map to the full display
@@ -267,7 +269,7 @@ fun MeridianScreen(
                         fontFamily = FontFamily.Serif
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("KM/H", color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.nav_speed_unit), color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(14.dp))
                     Text(time, color = c.sub, fontSize = 13.sp)
                 }
@@ -288,7 +290,7 @@ fun MeridianScreen(
                 ) {
                     Row {
                         Text(eta, color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(" arrival", color = c.sub, fontSize = 13.sp)
+                        Text(" " + stringResource(R.string.nav_arrival), color = c.sub, fontSize = 13.sp)
                     }
                     Text("Home · 14 min", color = c.ink, fontSize = 14.sp,
                         fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
@@ -298,7 +300,7 @@ fun MeridianScreen(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DestChip(
-                        label = "Home",
+                        label = stringResource(R.string.nav_home),
                         icon = Icons.Filled.Home,
                         c = c,
                         onClick = {
@@ -308,7 +310,7 @@ fun MeridianScreen(
                         onLongClick = { editingSlot = "home" }
                     )
                     DestChip(
-                        label = "Work",
+                        label = stringResource(R.string.nav_work),
                         icon = Icons.Filled.Work,
                         c = c,
                         onClick = {
@@ -318,7 +320,7 @@ fun MeridianScreen(
                         onLongClick = { editingSlot = "work" }
                     )
                     DestChip(
-                        label = "Fuel",
+                        label = stringResource(R.string.nav_fuel),
                         icon = Icons.Filled.LocalGasStation,
                         c = c,
                         onClick = { bridge.navigate("gas station") },
@@ -351,7 +353,7 @@ private fun SearchDialog(
                 .background(c.card)
                 .padding(22.dp)
         ) {
-            Text("Where to?", color = c.ink, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.nav_search_placeholder), color = c.ink, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
 
             // Big voice button — the primary way to search while driving
             Row(
@@ -368,7 +370,7 @@ private fun SearchDialog(
                 Icon(Icons.Filled.Mic, null, tint = c.card, modifier = Modifier.size(26.dp))
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    "SPEAK DESTINATION",
+                    stringResource(R.string.nav_speak_destination),
                     color = c.card,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
@@ -378,7 +380,7 @@ private fun SearchDialog(
 
             if (recents.isNotEmpty()) {
                 Text(
-                    "RECENT",
+                    stringResource(R.string.nav_recent),
                     color = c.sub,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -402,7 +404,7 @@ private fun SearchDialog(
             }
 
             Text(
-                "OR TYPE",
+                stringResource(R.string.nav_or_type),
                 color = c.sub,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -413,7 +415,7 @@ private fun SearchDialog(
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                placeholder = { Text("Address or place", color = c.sub) },
+                placeholder = { Text(stringResource(R.string.nav_place_hint), color = c.sub) },
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                     focusedTextColor = c.ink,
                     unfocusedTextColor = c.ink,
@@ -432,7 +434,7 @@ private fun SearchDialog(
 
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    "CANCEL",
+                    stringResource(R.string.nav_cancel),
                     color = c.sub,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -442,7 +444,7 @@ private fun SearchDialog(
                         .padding(horizontal = 18.dp, vertical = 14.dp)
                 )
                 Text(
-                    "GO",
+                    stringResource(R.string.nav_go),
                     color = c.accent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -478,7 +480,7 @@ private fun PlaceEditorDialog(
         ) {
             Text("Set $label address", color = c.ink, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                "Saved once, then one tap navigates there. Long-press the chip to change it later.",
+                stringResource(R.string.nav_saved_place_hint),
                 color = c.sub,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 6.dp)
@@ -497,14 +499,14 @@ private fun PlaceEditorDialog(
             ) {
                 Icon(Icons.Filled.Mic, null, tint = c.card, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(10.dp))
-                Text("SPEAK ADDRESS", color = c.card, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nav_speak_address), color = c.card, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
 
             androidx.compose.material3.OutlinedTextField(
                 value = value,
                 onValueChange = { value = it },
                 singleLine = true,
-                placeholder = { Text("Street, district, city", color = c.sub) },
+                placeholder = { Text(stringResource(R.string.nav_saved_place_hint), color = c.sub) },
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                     focusedTextColor = c.ink,
                     unfocusedTextColor = c.ink,
@@ -517,7 +519,7 @@ private fun PlaceEditorDialog(
 
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    "CANCEL",
+                    stringResource(R.string.nav_cancel),
                     color = c.sub,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,

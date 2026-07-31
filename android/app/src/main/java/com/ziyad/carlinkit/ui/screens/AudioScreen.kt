@@ -24,8 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ziyad.carlinkit.R
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
@@ -55,7 +57,7 @@ fun AudioScreen(bridge: SystemBridge) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Audio DSP", color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.audio_title), color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
 
             // Engine Active Status Badge
             Box(
@@ -74,7 +76,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (globalAvailable) "Engine: Global (all apps)" else "Engine: Built-in player only",
+                        text = if (globalAvailable) stringResource(R.string.audio_engine_global) else stringResource(R.string.audio_engine_local),
                         color = if (globalAvailable) EmeraldGreen else SafetyAmber,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -102,7 +104,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "System-wide effects are blocked on this device. Use the built-in player for full audio processing.",
+                        text = stringResource(R.string.audio_blocked_message),
                         color = M.ink,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
@@ -132,7 +134,7 @@ fun AudioScreen(bridge: SystemBridge) {
                 // Presets row
                 if (presets.isNotEmpty()) {
                     Text(
-                        text = "PRESETS",
+                        text = stringResource(R.string.audio_presets),
                         color = M.sub,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -167,7 +169,7 @@ fun AudioScreen(bridge: SystemBridge) {
                 // Dynamic Graphic EQ Sliders (from Equalizer.getNumberOfBands())
                 if (bands.isEmpty()) {
                     Text(
-                        text = "Initializing Equalizer hardware...",
+                        text = stringResource(R.string.audio_eq_initializing),
                         color = M.sub,
                         fontSize = 12.sp
                     )
@@ -258,7 +260,7 @@ fun AudioScreen(bridge: SystemBridge) {
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "BASS BOOST",
+                                text = stringResource(R.string.audio_bass_boost),
                                 color = M.ink,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
@@ -309,7 +311,7 @@ fun AudioScreen(bridge: SystemBridge) {
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "LOUDNESS GAIN",
+                                text = stringResource(R.string.audio_loudness_gain),
                                 color = M.ink,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
@@ -397,13 +399,13 @@ fun AudioScreen(bridge: SystemBridge) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "DYNAMICS LIMITER",
+                            text = stringResource(R.string.audio_limiter),
                             color = M.ink,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Automatic peak protection via DynamicsProcessing",
+                            text = stringResource(R.string.audio_limiter_desc),
                             color = M.sub,
                             fontSize = 11.sp
                         )

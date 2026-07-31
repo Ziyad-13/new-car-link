@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ziyad.carlinkit.LocalTrack
@@ -35,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import com.ziyad.carlinkit.R
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.theme.M
 import com.ziyad.carlinkit.ui.theme.*
@@ -94,13 +96,13 @@ fun MediaScreen(bridge: SystemBridge) {
                     .padding(16.dp)
             ) {
                 Text(
-                    "Enable media control",
+                    stringResource(R.string.media_permission_title),
                     color = M.ink,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "Android requires notification access before this launcher can control Spotify, Bluetooth or other players.",
+                    stringResource(R.string.media_permission_body),
                     color = M.sub,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 4.dp)
@@ -123,7 +125,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         }
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    Text("OPEN SETTINGS", color = M.card, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.media_open_settings), color = M.card, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         } else if (nowTitle != null) {
@@ -136,7 +138,7 @@ fun MediaScreen(bridge: SystemBridge) {
                     .padding(16.dp)
             ) {
                 Text(
-                    nowSource ?: "Bluetooth",
+                    nowSource ?: stringResource(R.string.media_bluetooth),
                     color = M.sub,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -179,20 +181,20 @@ fun MediaScreen(bridge: SystemBridge) {
         }
 
         // Header — Meridian spec: 17sp bold title, source chips on the right
-        com.ziyad.carlinkit.ui.theme.ScreenHeader(title = "Media") {
+        com.ziyad.carlinkit.ui.theme.ScreenHeader(title = stringResource(R.string.media_title)) {
             com.ziyad.carlinkit.ui.theme.MChip(
-                label = if (showDiag) "Hide info" else "Diagnose",
+                label = if (showDiag) stringResource(R.string.media_diag_hide) else stringResource(R.string.media_diag_show),
                 selected = showDiag
             ) {
                 diagText = bridge.externalMedia.diagnostics()
                 showDiag = !showDiag
             }
             com.ziyad.carlinkit.ui.theme.MChip(
-                label = nowSource ?: "External",
+                label = nowSource ?: stringResource(R.string.media_external),
                 selected = nowTitle != null
             ) {}
             com.ziyad.carlinkit.ui.theme.MChip(
-                label = "Library",
+                label = stringResource(R.string.media_library),
                 selected = nowTitle == null
             ) {}
         }
@@ -207,7 +209,7 @@ fun MediaScreen(bridge: SystemBridge) {
                     .padding(14.dp)
             ) {
                 Text(
-                    "MEDIA SESSION DIAGNOSTICS",
+                    stringResource(R.string.media_diag_title),
                     color = M.sub,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -221,7 +223,7 @@ fun MediaScreen(bridge: SystemBridge) {
                 )
                 Row(modifier = Modifier.padding(top = 10.dp)) {
                     Text(
-                        "REFRESH",
+                        stringResource(R.string.media_refresh),
                         color = M.accent,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
