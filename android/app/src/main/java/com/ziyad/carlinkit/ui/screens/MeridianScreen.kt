@@ -195,7 +195,7 @@ fun MeridianScreen(
         // ── Map panel ────────────────────────────────────────────────
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .then(if (fullscreenMap) Modifier.fillMaxSize() else Modifier.weight(1.6f))
                 .fillMaxHeight()
                 .background(c.map)
         ) {
@@ -328,6 +328,161 @@ fun MeridianScreen(
             }
         }
 
+        // ── Information column ───────────────────────────────────────
+        if (!fullscreenMap) Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(c.bg)
+        ) {
+            // Major block: speed + clock
+            Column(
+                modifier = Modifier
+                    .weight(1.6f)
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "CARLINKKIT",
+                        color = c.sub,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.2.sp
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Filled.LocationOn, null, tint = c.sub, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Wifi, null, tint = c.sub, modifier = Modifier.size(16.dp))
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = speed.toString(),
+                        color = c.ink,
+                        fontSize = 84.sp,
+                        fontFamily = FontFamily.Serif,
+                        lineHeight = 84.sp
+                    )
+                    Text(
+                        "KM/H",
+                        color = c.sub,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 2.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        Text(time, color = c.ink, fontSize = 26.sp, fontFamily = FontFamily.Serif)
+                        Text(
+                            date,
+                            color = c.sub,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.8.sp,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
+                    Text(
+                        "${bridge.deviceModel()} · $wifiSsid",
+                        color = c.sub,
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+
+            Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
+
+            // Minor block: media + quick actions
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(c.line),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Filled.MusicNote, null, tint = c.sub, modifier = Modifier.size(22.dp))
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            track?.title ?: "Nothing playing",
+                            color = c.ink,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1
+                        )
+                        Text(
+                            track?.artist ?: "—",
+                            color = c.sub,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TapIcon(Icons.Filled.SkipPrevious, c.ink) {
+                            bridge.localPlayerManager.previousTrack()
+                        }
+                        TapIcon(
+                            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            c.ink
+                        ) { bridge.localPlayerManager.togglePlay() }
+                        TapIcon(Icons.Filled.SkipNext, c.ink) {
+                            bridge.localPlayerManager.nextTrack()
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .border(1.dp, c.line, CircleShape)
+                            .clickable { onOpenMedia() }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            "LIBRARY",
+                            color = c.accent,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                        TapIcon(Icons.Filled.Phone, c.ink) { bridge.launch("com.android.dialer") }
+                        TapIcon(Icons.Filled.Chat, c.ink) { bridge.launch("com.android.messaging") }
+                        TapIcon(Icons.Filled.GridView, c.accent) { onOpenApps() }
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -42,7 +42,7 @@ import com.ziyad.carlinkit.ui.screens.MediaScreen
 import com.ziyad.carlinkit.ui.theme.*
 
 enum class Tab {
-    DASHBOARD, APPS
+    DASHBOARD, MEDIA, AUDIO, APPS
 }
 
 @Composable
@@ -69,37 +69,125 @@ fun LauncherApp(bridge: SystemBridge) {
                     .fillMaxSize()
                     .background(m.bg)
             ) {
-                // PERSISTENT CONTROL RAIL — hidden only in full-screen map
-                if (!fullscreenMap) ControlRail(
-                    bridge = bridge,
-                    m = m,
-                    onHome = { activeTab = Tab.DASHBOARD },
-                    onApps = { activeTab = Tab.APPS },
-                    appsSelected = activeTab == Tab.APPS
-                )
+                // LEFT SIDEBAR — hidden while the map is full screen
+                if (!fullscreenMap) Column(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .fillMaxHeight()
+                        .background(m.card)
+                        .border(1.dp, m.line)
+                        .padding(vertical = 12.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Top Brand Mark
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(m.accent)
+                            .clickable { activeTab = Tab.DASHBOARD },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "K",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Black
+                        )
+                    }
+
+                    // Middle Navigation Actions
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SidebarButton(
+                            icon = Icons.Default.Dashboard,
+                            label = "Cockpit",
+                            isSelected = activeTab == Tab.DASHBOARD,
+                            m = m,
+                            onClick = { activeTab = Tab.DASHBOARD }
+                        )
+                        SidebarButton(
+                            icon = Icons.Default.LibraryMusic,
+                            label = "Media",
+                            isSelected = activeTab == Tab.MEDIA,
+                            m = m,
+                            onClick = { activeTab = Tab.MEDIA }
+                        )
+                        SidebarButton(
+                            icon = Icons.Default.Equalizer,
+                            label = "Audio DSP",
+                            isSelected = activeTab == Tab.AUDIO,
+                            m = m,
+                            onClick = { activeTab = Tab.AUDIO }
+                        )
+                        SidebarButton(
+                            icon = Icons.Default.Apps,
+                            label = "Apps",
+                            isSelected = activeTab == Tab.APPS,
+                            m = m,
+                            onClick = { activeTab = Tab.APPS }
+                        )
+                    }
+
+                    // Bottom Utilities Shortcuts (System Actions)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Day / Night / Auto toggle
+                        SidebarUtilityButton(
+                            icon = when (com.ziyad.carlinkit.ui.theme.M.mode) {
+                                com.ziyad.carlinkit.ui.theme.ThemeMode.DAY ->
+                                    Icons.Default.LightMode
+                                com.ziyad.carlinkit.ui.theme.ThemeMode.NIGHT ->
+                                    Icons.Default.DarkMode
+                                com.ziyad.carlinkit.ui.theme.ThemeMode.AUTO ->
+                                    Icons.Default.BrightnessAuto
+                            },
+                            m = m,
+                            onClick = { com.ziyad.carlinkit.ui.theme.M.cycle(ctx) }
+                        )
+                        // System Settings trigger
+                        SidebarUtilityButton(
+                            icon = Icons.Default.Settings,
+                            m = m,
+                            onClick = { bridge.openSettings() }
+                        )
+                        // Wi-Fi system Settings trigger
+                        SidebarUtilityButton(
+                            icon = Icons.Default.Wifi,
+                            m = m,
+                            onClick = { bridge.openWifi() }
+                        )
+                    }
+                }
 
                 // MAIN INTERFACE FRAME (800x480 optimization)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f)
-                        .background(m.bg)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(SpaceBlack, Color(0xFF030509))
+                            )
+                        )
                 ) {
                     when (activeTab) {
                         Tab.DASHBOARD -> MeridianScreen(
                             bridge = bridge,
                             isNight = isNightMode,
                             onOpenApps = { activeTab = Tab.APPS },
-                            onOpenMedia = { activeTab = Tab.APPS },
+                            onOpenMedia = { activeTab = Tab.MEDIA },
                             fullscreenMap = fullscreenMap,
                             onToggleFullscreen = { fullscreenMap = !fullscreenMap }
                         )
-                        // Parked-only hub: apps, media library, DSP, settings
-                        Tab.APPS -> AppsHub(
-                            bridge = bridge,
-                            m = m,
-                            onBack = { activeTab = Tab.DASHBOARD }
-                        )
+                        Tab.MEDIA -> MediaScreen(bridge = bridge)
+                        Tab.AUDIO -> AudioScreen(bridge = bridge)
+                        Tab.APPS -> AppsScreen(bridge = bridge)
                     }
                 }
             }
