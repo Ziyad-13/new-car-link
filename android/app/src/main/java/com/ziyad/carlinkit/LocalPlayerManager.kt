@@ -177,37 +177,6 @@ class LocalPlayerManager(
                 }
             } catch (_: Exception) {}
 
-            // Fallback streams if no local tracks found on device/emulator
-            if (audioList.isEmpty()) {
-                audioList.addAll(
-                    listOf(
-                        LocalTrack(
-                            id = 101L,
-                            title = "Lofi Coding Session",
-                            artist = "Chillhop Music",
-                            album = "CarLink DSP Demo",
-                            durationMs = 230000L,
-                            contentUri = Uri.parse("https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3")
-                        ),
-                        LocalTrack(
-                            id = 102L,
-                            title = "Synthwave Cruise",
-                            artist = "Nightdrive Audio",
-                            album = "CarLink High Quality",
-                            durationMs = 195000L,
-                            contentUri = Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a7321d.mp3?filename=synthwave-80s-110045.mp3")
-                        ),
-                        LocalTrack(
-                            id = 103L,
-                            title = "Ambient Highway",
-                            artist = "Electronic Drift",
-                            album = "CarLink Master",
-                            durationMs = 210000L,
-                            contentUri = Uri.parse("https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=ambient-relax-10444.mp3")
-                        )
-                    )
-                )
-            }
 
             _tracks.value = audioList
             if (_currentTrack.value == null && audioList.isNotEmpty()) {

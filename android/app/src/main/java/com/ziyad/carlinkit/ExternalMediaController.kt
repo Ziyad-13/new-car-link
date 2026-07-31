@@ -8,6 +8,7 @@ import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -54,6 +55,16 @@ class ExternalMediaController(private val context: Context) {
     fun start() {
         _hasAccess.value = notificationAccessGranted()
         if (!_hasAccess.value) return
+        // Android may leave the listener unbound if access was granted after
+        // the app started; this forces it to connect.
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                NotificationListenerService.requestRebind(
+                    ComponentName(context, MediaNotificationListener::class.java)
+                )
+            }
+        } catch (_: Throwable) {
+        }
         try {
             manager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
             val component = ComponentName(context, MediaNotificationListener::class.java)
@@ -202,7 +213,9 @@ class ExternalMediaController(private val context: Context) {
 
     /** Re-scan for sessions on demand. */
     fun refresh() {
-        if (!notificationAccessGranted()) return
+        val granted = notificationAccessGranted()
+        _hasAccess.value = granted
+        if (!granted) return
         if (manager == null) start() else attachToActiveSession()
     }
 

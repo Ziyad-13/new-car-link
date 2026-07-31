@@ -19,7 +19,9 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.StateFlow
 
 class SystemBridge(application: Application) : AndroidViewModel(application), LocationListener {
@@ -33,6 +35,18 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     val audioEngine = AudioEngine(ctx)
     val localPlayerManager = LocalPlayerManager(ctx, audioEngine)
     val externalMedia = ExternalMediaController(ctx).also { it.start() }
+
+    init {
+        // Sessions appear and disappear long after startup (a player launched
+        // later, permission granted later). Poll so the rail always reflects
+        // what is actually playing.
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(4000)
+                try { externalMedia.refresh() } catch (_: Throwable) {}
+            }
+        }
+    }
 
     /** Metadata scraped from Bluetooth notifications when no session exists. */
     val btTitle = MediaNotificationListener.btTitle
