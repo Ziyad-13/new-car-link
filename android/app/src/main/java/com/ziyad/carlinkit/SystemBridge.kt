@@ -156,20 +156,65 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     /**
      * Launch Google Maps navigation directly pointing to a specific query.
      */
-    fun navigate(query: String) {
-        try {
-            val gmmIntentUri = Uri.parse("google.navigation:q=${Uri.encode(query)}&mode=d")
-            val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-            mapIntent.setPackage("com.google.android.apps.maps")
-            mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            ctx.startActivity(mapIntent)
-        } catch (e: Exception) {
-            // Fallback: open in any maps or browser
-            val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encode(query)}"))
-            mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            ctx.startActivity(mapIntent)
-        }
+    companion object {
+        /** Saudi-built navigation app; preferred when installed. */
+        const val HUDHUD_PACKAGE = "sa.hudhud.maps"
+        const val GOOGLE_MAPS_PACKAGE = "com.google.android.apps.maps"
     }
+
+    /** True when Hudhud Maps is installed on this device. */
+    fun hudhudInstalled(): Boolean = try {
+        ctx.packageManager.getPackageInfo(HUDHUD_PACKAGE, 0)
+        true
+    } catch (_: Throwable) {
+        false
+    }
+
+    /**
+     * Start navigation to a place.
+     *
+     * Order of preference: Hudhud (local road data), then whatever the user
+     * has set as their navigation app, then Google Maps, then the web.
+     * Each step is attempted only if the previous one has no handler.
+     */
+    fun navigate(query: String) {
+        if (query.isBlank()) return
+        val encoded = Uri.encode(query)
+        val geoUri = Uri.parse("geo:0,0?q=$encoded")
+
+        // 1. Hudhud, if installed
+        if (hudhudInstalled() && tryStart(Intent(Intent.ACTION_VIEW, geoUri).apply {
+                setPackage(HUDHUD_PACKAGE)
+            })) return
+
+        // 2. Whatever handles geo: (user's default, or a chooser)
+        if (tryStart(Intent(Intent.ACTION_VIEW, geoUri))) return
+
+        // 3. Google Maps turn-by-turn
+        if (tryStart(Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("google.navigation:q=$encoded&mode=d")
+            ).apply { setPackage(GOOGLE_MAPS_PACKAGE) })) return
+
+        // 4. Browser
+        tryStart(Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://www.google.com/maps/search/?api=1&query=$encoded")
+        ))
+    }
+
+    private fun tryStart(intent: Intent): Boolean = try {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (intent.resolveActivity(ctx.packageManager) != null) {
+            ctx.startActivity(intent)
+            true
+        } else {
+            false
+        }
+    } catch (_: Throwable) {
+        false
+    }
+
 
     /**
      * Open standard Android OS settings.
