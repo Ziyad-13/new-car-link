@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,21 +57,22 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Rail surface is always dark, independent of the day/night map theme, so the
-// controls read as a distinct instrument panel rather than part of the map.
-private val RailBg = Color(0xFF14161A)
-private val RailCard = Color(0xFF1F232A)
-private val RailLine = Color(0xFF2C313A)
-private val RailInk = Color(0xFFECE8DC)
-private val RailSub = Color(0xFF8B909B)
-private val RailAccent = Color(0xFF7C9AD4)
+// Translucent dark glass: the map shows through, but text stays legible.
+private val GlassTop = Color(0xE614161A)
+private val GlassBottom = Color(0xE61B1F26)
+private val GlassEdge = Color(0x33FFFFFF)
+private val PanelFill = Color(0x1AFFFFFF)
+private val PanelEdge = Color(0x1FFFFFFF)
+private val RailInk = Color(0xFFF2EFE7)
+private val RailSub = Color(0xFF9AA0AC)
+private val RailAccent = Color(0xFF8FADE0)
 
 /**
- * Persistent 140dp control rail, modelled on CarPlay.
+ * Floating glass control rail.
  *
- * Nothing here navigates away: speed, clock and transport controls stay on
- * screen whatever else is happening, so changing a track costs one glance
- * and one press instead of a trip through a menu.
+ * Sits above the map rather than beside it, so the map keeps the full width
+ * while speed, clock and transport controls remain permanently reachable.
+ * Three stacked panels: status, now playing, navigation.
  */
 @Composable
 fun ControlRail(
@@ -78,7 +80,8 @@ fun ControlRail(
     m: MeridianColors,
     onHome: () -> Unit,
     onApps: () -> Unit,
-    appsSelected: Boolean
+    appsSelected: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val speed by bridge.currentSpeedKmh.collectAsState()
 
@@ -105,73 +108,66 @@ fun ControlRail(
     }
 
     Box(
-        modifier = Modifier
-            .width(140.dp)
+        modifier = modifier
+            .padding(start = 10.dp, top = 10.dp, bottom = 10.dp)
+            .width(168.dp)
             .fillMaxHeight()
-            .background(RailBg)
+            .clip(RoundedCornerShape(22.dp))
+            .background(Brush.verticalGradient(listOf(GlassTop, GlassBottom)))
+            .border(1.dp, GlassEdge, RoundedCornerShape(22.dp))
     ) {
 
-        // Album art bleeds through as a dim, blurred backdrop
+        // Album art tints the glass from behind
         albumArt?.let { art ->
             Image(
                 bitmap = art.asImageBitmap(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(28.dp)
+                modifier = Modifier.fillMaxSize().blur(34.dp)
             )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                RailBg.copy(alpha = 0.94f),
-                                RailBg.copy(alpha = 0.82f),
-                                RailBg.copy(alpha = 0.94f)
-                            )
-                        )
-                    )
+                    .background(Brush.verticalGradient(listOf(GlassTop, GlassBottom)))
             )
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            // ── Status card ──────────────────────────────────────────
-            RailCardSurface {
-                Text(time, color = RailInk, fontSize = 20.sp, fontFamily = FontFamily.Serif)
+            // ── 1. Status ────────────────────────────────────────────
+            GlassPanel {
+                Text(time, color = RailInk, fontSize = 21.sp, fontFamily = FontFamily.Serif)
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         speed.toString(),
                         color = RailAccent,
-                        fontSize = 30.sp,
+                        fontSize = 34.sp,
                         fontFamily = FontFamily.Serif
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(5.dp))
                     Text(
-                        "KM/H",
+                        stringResource(R.string.nav_speed_unit),
                         color = RailSub,
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 5.dp)
+                        modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
             }
 
-            // ── Now playing card ─────────────────────────────────────
-            RailCardSurface {
+            // ── 2. Now playing ───────────────────────────────────────
+            GlassPanel(modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(RailLine),
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PanelFill),
                     contentAlignment = Alignment.Center
                 ) {
                     if (albumArt != null) {
@@ -186,42 +182,38 @@ fun ControlRail(
                             Icons.Filled.MusicNote,
                             null,
                             tint = RailSub,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
 
                 Text(
-                    text = title ?: stringResourceSafe(),
+                    text = title ?: stringResource(R.string.media_no_track),
                     color = RailInk,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                Text(
-                    text = artist ?: "—",
-                    color = RailSub,
-                    fontSize = 9.sp,
-                    maxLines = 1
-                )
+                Text(text = artist ?: "—", color = RailSub, fontSize = 9.sp, maxLines = 1)
+
+                Spacer(Modifier.height(10.dp))
 
                 Row(
-                    modifier = Modifier.padding(top = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    RailIcon(Icons.Filled.SkipPrevious, RailInk, 34) {
+                    RailIcon(Icons.Filled.SkipPrevious, RailInk, 38) {
                         if (external) bridge.externalMedia.previous()
                         else bridge.localPlayerManager.previousTrack()
                     }
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(56.dp)
                             .clip(CircleShape)
                             .background(
                                 Brush.verticalGradient(
-                                    listOf(RailAccent, RailAccent.copy(alpha = 0.72f))
+                                    listOf(RailAccent, RailAccent.copy(alpha = 0.7f))
                                 )
                             )
                             .clickable {
@@ -234,24 +226,24 @@ fun ControlRail(
                             if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = "Play or pause",
                             tint = Color(0xFF11141A),
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
-                    RailIcon(Icons.Filled.SkipNext, RailInk, 34) {
+                    RailIcon(Icons.Filled.SkipNext, RailInk, 38) {
                         if (external) bridge.externalMedia.next()
                         else bridge.localPlayerManager.nextTrack()
                     }
                 }
             }
 
-            // ── Navigation card ──────────────────────────────────────
+            // ── 3. Navigation ────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(RailCard)
-                    .border(1.dp, RailLine, RoundedCornerShape(14.dp))
-                    .padding(vertical = 4.dp),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(PanelFill)
+                    .border(1.dp, PanelEdge, RoundedCornerShape(16.dp))
+                    .padding(vertical = 5.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 RailTab(Icons.Filled.Map, !appsSelected, onHome)
@@ -262,19 +254,19 @@ fun ControlRail(
 }
 
 @Composable
-private fun stringResourceSafe(): String =
-    androidx.compose.ui.res.stringResource(R.string.media_no_track)
-
-@Composable
-private fun RailCardSurface(content: @Composable () -> Unit) {
+private fun GlassPanel(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(RailCard)
-            .border(1.dp, RailLine, RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(PanelFill)
+            .border(1.dp, PanelEdge, RoundedCornerShape(16.dp))
             .padding(vertical = 10.dp, horizontal = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         content()
     }
@@ -284,10 +276,10 @@ private fun RailCardSurface(content: @Composable () -> Unit) {
 private fun RailTab(icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(46.dp)
-            .clip(RoundedCornerShape(11.dp))
+            .size(50.dp)
+            .clip(RoundedCornerShape(13.dp))
             .then(
-                if (selected) Modifier.background(RailAccent.copy(alpha = 0.18f))
+                if (selected) Modifier.background(RailAccent.copy(alpha = 0.22f))
                 else Modifier
             )
             .clickable(onClick = onClick),
@@ -297,7 +289,7 @@ private fun RailTab(icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
             icon,
             null,
             tint = if (selected) RailAccent else RailSub,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }

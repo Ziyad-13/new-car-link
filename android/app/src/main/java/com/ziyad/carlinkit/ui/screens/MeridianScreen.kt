@@ -211,7 +211,7 @@ fun MeridianScreen(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(24.dp)
+                    .padding(start = 196.dp, end = 24.dp, top = 18.dp)
                     .fillMaxWidth()
                     .height(48.dp)
                     .clip(CircleShape)
@@ -279,7 +279,7 @@ fun MeridianScreen(
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(24.dp)
+                    .padding(start = 196.dp, bottom = 18.dp, end = 18.dp)
             ) {
                 Column(
                     modifier = Modifier

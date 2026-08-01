@@ -69,16 +69,7 @@ fun LauncherApp(bridge: SystemBridge) {
                     .fillMaxSize()
                     .background(m.bg)
             ) {
-                // PERSISTENT CONTROL RAIL — hidden only in full-screen map
-                if (!fullscreenMap) ControlRail(
-                    bridge = bridge,
-                    m = m,
-                    onHome = { activeTab = Tab.DASHBOARD },
-                    onApps = { activeTab = Tab.APPS },
-                    appsSelected = activeTab == Tab.APPS
-                )
-
-                // MAIN INTERFACE FRAME (800x480 optimization)
+                // MAIN INTERFACE FRAME — map runs edge to edge beneath the rail
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -110,6 +101,20 @@ fun LauncherApp(bridge: SystemBridge) {
                 exit = fadeOut(animationSpec = tween(600))
             ) {
                 BootScreen(onBootComplete = { isBooting = false })
+            }
+
+            // FLOATING GLASS RAIL — sits above the map, not beside it
+            if (!fullscreenMap) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    ControlRail(
+                        bridge = bridge,
+                        m = m,
+                        onHome = { activeTab = Tab.DASHBOARD },
+                        onApps = { activeTab = Tab.APPS },
+                        appsSelected = activeTab == Tab.APPS,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                }
             }
         }
     }
