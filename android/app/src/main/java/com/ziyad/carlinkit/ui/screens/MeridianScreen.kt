@@ -599,31 +599,59 @@ private fun GoogleMapPanel(latLon: Pair<Double, Double>?, bearing: Float, isNigh
         )
     }
 
-    // Follow the car smoothly. Animating (rather than snapping) on every fix
-    // is what removes the stutter — and we skip updates under ~5 m.
-    var lastTarget by remember {
+    // Camera following.
+    //
+    // The GPS emits a fix roughly twice a second. Animating to each fix meant
+    // every animation was cancelled mid-flight by the next one, which is what
+    // produced the stutter. Instead we drive one continuous animation whose
+    // target is updated as fixes arrive, and interpolate between them.
+    var target by remember {
         mutableStateOf<com.google.android.gms.maps.model.LatLng?>(null)
     }
-    LaunchedEffect(latLon) {
+    var targetBearing by remember { mutableStateOf(0f) }
+
+    LaunchedEffect(latLon, bearing) {
         val ll = latLon ?: return@LaunchedEffect
-        val target = com.google.android.gms.maps.model.LatLng(ll.first, ll.second)
-        val prev = lastTarget
-        val moved = prev == null ||
-            Math.abs(prev.latitude - target.latitude) > 0.00005 ||
-            Math.abs(prev.longitude - target.longitude) > 0.00005
-        if (!moved) return@LaunchedEffect
-        lastTarget = target
-        cameraPositionState.animate(
-            com.google.android.gms.maps.CameraUpdateFactory.newCameraPosition(
-                com.google.android.gms.maps.model.CameraPosition.Builder()
-                    .target(target)
-                    .zoom(16f)
-                    .bearing(bearing)
-                    .tilt(0f)
-                    .build()
-            ),
-            900
-        )
+        target = com.google.android.gms.maps.model.LatLng(ll.first, ll.second)
+        // Ignore bearing jitter when nearly stationary — it spins the map
+        // wildly at a standstill.
+        if (bearing != 0f) targetBearing = bearing
+    }
+
+    // Single long-lived loop: eases toward the latest target every frame
+    // instead of restarting an animation per fix.
+    LaunchedEffect(Unit) {
+        var current: com.google.android.gms.maps.model.LatLng? = null
+        var currentBearing = 0f
+        while (true) {
+            val t = target
+            if (t != null) {
+                val c = current
+                if (c == null) {
+                    current = t
+                    currentBearing = targetBearing
+                    cameraPositionState.position =
+                        com.google.android.gms.maps.model.CameraPosition.Builder()
+                            .target(t).zoom(17f).bearing(currentBearing).tilt(0f).build()
+                } else {
+                    // Exponential ease: fast when far, gentle when close.
+                    val f = 0.12
+                    val lat = c.latitude + (t.latitude - c.latitude) * f
+                    val lng = c.longitude + (t.longitude - c.longitude) * f
+                    // Shortest angular path, so 350° -> 10° does not spin backwards
+                    var diff = targetBearing - currentBearing
+                    while (diff > 180f) diff -= 360f
+                    while (diff < -180f) diff += 360f
+                    currentBearing += diff * 0.10f
+
+                    current = com.google.android.gms.maps.model.LatLng(lat, lng)
+                    cameraPositionState.position =
+                        com.google.android.gms.maps.model.CameraPosition.Builder()
+                            .target(current).zoom(17f).bearing(currentBearing).tilt(0f).build()
+                }
+            }
+            kotlinx.coroutines.delay(16) // ~60fps
+        }
     }
 
     com.google.maps.android.compose.GoogleMap(
@@ -634,6 +662,7 @@ private fun GoogleMapPanel(latLon: Pair<Double, Double>?, bearing: Float, isNigh
             isMyLocationEnabled = true,
             isBuildingEnabled = false,
             isTrafficEnabled = false,
+            isIndoorEnabled = false,
             mapStyleOptions = if (isNight) {
                 com.google.android.gms.maps.model.MapStyleOptions(NIGHT_MAP_STYLE)
             } else null

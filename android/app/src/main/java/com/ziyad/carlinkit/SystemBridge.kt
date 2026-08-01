@@ -117,8 +117,11 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
         _latLon.value = location.latitude to location.longitude
         if (location.hasBearing()) _bearing.value = location.bearing
         if (location.hasSpeed()) {
-            // Speed comes in m/s, convert to km/h (speed * 3.6)
-            _currentSpeedKmh.value = (location.speed * 3.6f).toInt()
+            // m/s -> km/h, lightly smoothed: raw GPS speed jitters by a few
+            // km/h even at a constant pace, which made the readout flicker.
+            val raw = location.speed * 3.6f
+            val prev = _currentSpeedKmh.value.toFloat()
+            _currentSpeedKmh.value = (prev + (raw - prev) * 0.35f).toInt()
         } else {
             _currentSpeedKmh.value = 0
         }
