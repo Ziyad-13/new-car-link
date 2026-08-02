@@ -103,6 +103,7 @@ fun MeridianScreen(
 
     var route by remember { mutableStateOf<com.ziyad.carlinkit.Route?>(null) }
     var routing by remember { mutableStateOf(false) }
+    var routeError by remember { mutableStateOf<String?>(null) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     fun go(destination: String) {
@@ -113,17 +114,19 @@ fun MeridianScreen(
         // Draw the route on our own map; only hand off if that fails.
         val ll = latLon
         if (ll == null) {
-            bridge.navigate(destination)
+            routeError = destination
             return
         }
         routing = true
+        routeError = null
         scope.launch {
             val r = com.ziyad.carlinkit.RouteService.fetchRoute(
                 com.google.android.gms.maps.model.LatLng(ll.first, ll.second),
                 destination
             )
             routing = false
-            if (r != null) route = r else bridge.navigate(destination)
+            // Stay inside the launcher on failure; offer the handoff, never force it.
+            if (r != null) route = r else routeError = destination
         }
     }
 
@@ -300,6 +303,55 @@ fun MeridianScreen(
                     .align(Alignment.BottomStart)
                     .padding(start = 196.dp, bottom = 18.dp, end = 18.dp)
             ) {
+                routeError?.let { failed ->
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(c.card)
+                            .border(1.dp, c.line, RoundedCornerShape(13.dp))
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            "Couldn't build the route",
+                            color = c.ink,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            failed,
+                            color = c.sub,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                        Row(modifier = Modifier.padding(top = 8.dp)) {
+                            Text(
+                                "OPEN IN MAPS",
+                                color = c.accent,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        bridge.navigate(failed)
+                                        routeError = null
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                            )
+                            Text(
+                                "DISMISS",
+                                color = c.sub,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { routeError = null }
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+
                 if (route != null || routing) {
                     Column(
                         modifier = Modifier
