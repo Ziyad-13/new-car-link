@@ -62,14 +62,14 @@ fun BootScreen(onBootComplete: () -> Unit) {
         launch {
             progressAnim.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 10000, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 4200, easing = FastOutSlowInEasing)
             )
             delay(400)
             onBootComplete()
         }
 
         launch {
-            val stepTime = 10000L / statuses.size
+            val stepTime = 4200L / statuses.size
             for (i in statuses.indices) {
                 statusIndex = i
                 delay(stepTime)
@@ -80,7 +80,7 @@ fun BootScreen(onBootComplete: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF090D16)),
+            .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         // Skip Button
@@ -105,35 +105,14 @@ fun BootScreen(onBootComplete: () -> Unit) {
             modifier = Modifier.width(420.dp)
         ) {
             
-            // Title
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.alpha(logoAlpha)
-            ) {
-                Text(
-                    text = stringResource(R.string.boot_title),
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 4.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(100))
-                        .background(ElectricBlue.copy(alpha = 0.15f))
-                        .border(1.dp, ElectricBlue.copy(alpha = 0.3f), RoundedCornerShape(100))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        color = BlueGlow,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
-            }
+            // Toyota emblem + CAMRY wordmark
+            CamryMark(
+                modifier = Modifier
+                    .alpha(logoAlpha)
+                    .scale(logoScale),
+                color = Color.White,
+                emblemSize = 74.dp
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
