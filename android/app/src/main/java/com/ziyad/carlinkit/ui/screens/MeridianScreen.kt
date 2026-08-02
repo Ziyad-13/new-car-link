@@ -341,6 +341,7 @@ fun MeridianScreen(
                             )
                         }
                     }
+                }
 
                 Spacer(Modifier.height(12.dp))
 
