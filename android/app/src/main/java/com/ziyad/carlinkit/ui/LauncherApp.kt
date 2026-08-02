@@ -103,8 +103,8 @@ fun LauncherApp(bridge: SystemBridge) {
                 BootScreen(onBootComplete = { isBooting = false })
             }
 
-            // FLOATING GLASS RAIL — sits above the map, not beside it
-            if (!fullscreenMap) {
+            // FLOATING GLASS RAIL — above the map, but never over the boot screen
+            if (!fullscreenMap && !isBooting) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     ControlRail(
                         bridge = bridge,
