@@ -104,7 +104,7 @@ fun LauncherApp(bridge: SystemBridge) {
             }
 
             // FLOATING GLASS RAIL — above the map, but never over the boot screen
-            if (!fullscreenMap && !isBooting) {
+            if (!fullscreenMap && !isBooting && activeTab == Tab.DASHBOARD) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     ControlRail(
                         bridge = bridge,
