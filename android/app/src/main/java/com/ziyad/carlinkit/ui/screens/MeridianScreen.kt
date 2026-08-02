@@ -64,6 +64,7 @@ import com.ziyad.carlinkit.ui.theme.MeridianColors
 import com.ziyad.carlinkit.ui.theme.MeridianDay
 import com.ziyad.carlinkit.ui.theme.MeridianNight
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -100,12 +101,30 @@ fun MeridianScreen(
     var workAddr by remember { mutableStateOf(loadPlace(context, "work")) }
     var editingSlot by remember { mutableStateOf<String?>(null) }
 
+    var route by remember { mutableStateOf<com.ziyad.carlinkit.Route?>(null) }
+    var routing by remember { mutableStateOf(false) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+
     fun go(destination: String) {
         if (destination.isBlank()) return
         recents = saveRecent(context, destination)
-        bridge.navigate(destination)
         showSearch = false
         query = ""
+        // Draw the route on our own map; only hand off if that fails.
+        val ll = latLon
+        if (ll == null) {
+            bridge.navigate(destination)
+            return
+        }
+        routing = true
+        scope.launch {
+            val r = com.ziyad.carlinkit.RouteService.fetchRoute(
+                com.google.android.gms.maps.model.LatLng(ll.first, ll.second),
+                destination
+            )
+            routing = false
+            if (r != null) route = r else bridge.navigate(destination)
+        }
     }
 
     // When set, the next voice result fills an editor field instead of navigating
@@ -202,7 +221,7 @@ fun MeridianScreen(
                 .background(c.map)
         ) {
             if (com.ziyad.carlinkit.BuildConfig.MAPS_KEY.isNotBlank()) {
-                GoogleMapPanel(latLon, bearing, isNight)
+                GoogleMapPanel(latLon, bearing, isNight, route)
             } else {
                 MapBackdrop(c, latLon, isNight)
             }
@@ -281,20 +300,47 @@ fun MeridianScreen(
                     .align(Alignment.BottomStart)
                     .padding(start = 196.dp, bottom = 18.dp, end = 18.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(13.dp))
-                        .background(c.card)
-                        .border(1.dp, c.line, RoundedCornerShape(13.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                ) {
-                    Row {
-                        Text(eta, color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(" " + stringResource(R.string.nav_arrival), color = c.sub, fontSize = 13.sp)
+                if (route != null || routing) {
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(c.card)
+                            .border(1.dp, c.line, RoundedCornerShape(13.dp))
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        if (routing) {
+                            Text("Finding route…", color = c.sub, fontSize = 13.sp)
+                        } else route?.let { r ->
+                            Row {
+                                Text(
+                                    r.durationText,
+                                    color = c.accent,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(" · ${r.distanceText}", color = c.sub, fontSize = 13.sp)
+                            }
+                            Text(
+                                r.destinationName,
+                                color = c.ink,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Text(
+                                "CLEAR ROUTE",
+                                color = c.sub,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .padding(top = 6.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { route = null }
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            )
+                        }
                     }
-                    Text("Home · 14 min", color = c.ink, fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
-                }
 
                 Spacer(Modifier.height(12.dp))
 
@@ -588,7 +634,12 @@ private fun saveRecent(context: android.content.Context, destination: String): L
  * Google Maps panel, used when a Maps SDK for Android key is configured.
  */
 @Composable
-private fun GoogleMapPanel(latLon: Pair<Double, Double>?, bearing: Float, isNight: Boolean) {
+private fun GoogleMapPanel(
+    latLon: Pair<Double, Double>?,
+    bearing: Float,
+    isNight: Boolean,
+    route: com.ziyad.carlinkit.Route?
+) {
     val cameraPositionState = com.google.maps.android.compose.rememberCameraPositionState {
         position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
             com.google.android.gms.maps.model.LatLng(
@@ -675,7 +726,19 @@ private fun GoogleMapPanel(latLon: Pair<Double, Double>?, bearing: Float, isNigh
             tiltGesturesEnabled = false,
             rotationGesturesEnabled = false
         )
-    )
+    ) {
+        route?.let { r ->
+            com.google.maps.android.compose.Polyline(
+                points = r.points,
+                color = androidx.compose.ui.graphics.Color(0xFF5B6C8F),
+                width = 14f
+            )
+            com.google.maps.android.compose.Marker(
+                state = com.google.maps.android.compose.MarkerState(position = r.destination),
+                title = r.destinationName
+            )
+        }
+    }
 }
 
 private const val NIGHT_MAP_STYLE = """[
