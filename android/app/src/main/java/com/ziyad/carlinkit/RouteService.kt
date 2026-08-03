@@ -58,7 +58,7 @@ object RouteService {
         // Prefer explicit coordinates wherever they appear in the URL
         Regex("""[@!/=](-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})""")
             .find(expanded)
-            ?.let { return@withContext "${'$'}{it.groupValues[1]},${'$'}{it.groupValues[2]}" }
+            ?.let { return@withContext it.groupValues[1] + "," + it.groupValues[2] }
 
         Regex("""[?&]q=([^&]+)""").find(expanded)?.let {
             return@withContext java.net.URLDecoder.decode(it.groupValues[1], "UTF-8")
@@ -113,7 +113,7 @@ object RouteService {
             if (json.optString("status") != "OK") return null
             val first = json.getJSONArray("results").optJSONObject(0) ?: return null
             val loc = first.getJSONObject("geometry").getJSONObject("location")
-            "${'$'}{loc.getDouble("lat")},${'$'}{loc.getDouble("lng")}"
+            loc.getDouble("lat").toString() + "," + loc.getDouble("lng").toString()
         } catch (_: Throwable) {
             null
         }
