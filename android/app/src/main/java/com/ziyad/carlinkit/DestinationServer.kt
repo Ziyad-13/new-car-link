@@ -31,8 +31,30 @@ class DestinationServer(private val context: Context) {
         const val PORT = 8719
     }
 
-    private val _pin = MutableStateFlow(Random.nextInt(1000, 9999).toString())
+    // Persisted: a PIN that changed on every launch would mean re-reading it
+    // from the car screen before every use, which defeats the purpose.
+    private val _pin = MutableStateFlow(loadOrCreatePin())
     val pin: StateFlow<String> = _pin
+
+    private fun loadOrCreatePin(): String = try {
+        val prefs = context.getSharedPreferences("carlinkkit_server", Context.MODE_PRIVATE)
+        prefs.getString("pin", null) ?: Random.nextInt(1000, 9999).toString().also {
+            prefs.edit().putString("pin", it).apply()
+        }
+    } catch (_: Throwable) {
+        "1234"
+    }
+
+    /** Issue a new PIN, e.g. after sharing the network with someone. */
+    fun regeneratePin() {
+        val fresh = Random.nextInt(1000, 9999).toString()
+        try {
+            context.getSharedPreferences("carlinkkit_server", Context.MODE_PRIVATE)
+                .edit().putString("pin", fresh).apply()
+        } catch (_: Throwable) {
+        }
+        _pin.value = fresh
+    }
 
     private val _address = MutableStateFlow<String?>(null)
     val address: StateFlow<String?> = _address

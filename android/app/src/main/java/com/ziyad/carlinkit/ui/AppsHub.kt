@@ -154,6 +154,17 @@ fun AppsHub(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "NEW",
+                    color = m.sub,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { bridge.destinationServer.regeneratePin() }
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                )
             }
         }
 
