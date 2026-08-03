@@ -307,7 +307,72 @@ fun MeridianScreen(
                 }
             }
 
-            // ETA card + destination chips
+            // Trip readout — bottom right, sized to be read at a glance
+            if (route != null || routing) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 18.dp, bottom = 18.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(c.card)
+                        .border(1.dp, c.line, RoundedCornerShape(16.dp))
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    if (routing) {
+                        Text("Finding route…", color = c.sub, fontSize = 13.sp)
+                    } else route?.let { r ->
+                        // Minutes dominate: it is the one number that matters
+                        // while moving.
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                r.durationText.filter { it.isDigit() }
+                                    .ifBlank { r.durationText },
+                                color = c.ink,
+                                fontSize = 40.sp,
+                                fontFamily = FontFamily.Serif,
+                                lineHeight = 40.sp
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "min",
+                                color = c.sub,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+                        }
+                        Text(
+                            r.distanceText,
+                            color = c.accent,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        // Just the first part of the address — the full string
+                        // is unreadable while driving.
+                        Text(
+                            r.destinationName.substringBefore(",").trim(),
+                            color = c.sub,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                        Text(
+                            "END",
+                            color = c.sub,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { route = null }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            }
+
+            // Error card + destination chips
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -357,49 +422,6 @@ fun MeridianScreen(
                                     .clip(RoundedCornerShape(8.dp))
                                     .clickable { routeError = null }
                                     .padding(horizontal = 10.dp, vertical = 8.dp)
-                            )
-                        }
-                    }
-                }
-
-                if (route != null || routing) {
-                    Column(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(13.dp))
-                            .background(c.card)
-                            .border(1.dp, c.line, RoundedCornerShape(13.dp))
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
-                        if (routing) {
-                            Text("Finding route…", color = c.sub, fontSize = 13.sp)
-                        } else route?.let { r ->
-                            Row {
-                                Text(
-                                    r.durationText,
-                                    color = c.accent,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(" · ${r.distanceText}", color = c.sub, fontSize = 13.sp)
-                            }
-                            Text(
-                                r.destinationName,
-                                color = c.ink,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                            Text(
-                                "CLEAR ROUTE",
-                                color = c.sub,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .padding(top = 6.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { route = null }
-                                    .padding(horizontal = 8.dp, vertical = 6.dp)
                             )
                         }
                     }
@@ -791,10 +813,16 @@ private fun GoogleMapPanel(
         )
     ) {
         route?.let { r ->
+            // Casing beneath the route so it stays legible over any map colour
             com.google.maps.android.compose.Polyline(
                 points = r.points,
-                color = androidx.compose.ui.graphics.Color(0xFF5B6C8F),
-                width = 14f
+                color = androidx.compose.ui.graphics.Color(0xFF2B3446),
+                width = 26f
+            )
+            com.google.maps.android.compose.Polyline(
+                points = r.points,
+                color = androidx.compose.ui.graphics.Color(0xFF7C9AD4),
+                width = 16f
             )
             com.google.maps.android.compose.Marker(
                 state = com.google.maps.android.compose.MarkerState(position = r.destination),
