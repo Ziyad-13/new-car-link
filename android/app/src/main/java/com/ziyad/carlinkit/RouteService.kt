@@ -23,6 +23,55 @@ data class Route(
 
 object RouteService {
 
+    /**
+     * Turn a pasted maps link into something the Directions API accepts.
+     *
+     * Phones share places as links, not names — the short goo.gl/maps form has
+     * to be followed to its target, and coordinates buried in the URL are far
+     * more precise than the place name.
+     */
+    suspend fun resolveDestination(input: String): String = withContext(Dispatchers.IO) {
+        val text = input.trim()
+        if (!text.startsWith("http", ignoreCase = true)) return@withContext text
+
+        val expanded = try {
+            if (text.contains("goo.gl") || text.contains("maps.app") ||
+                text.contains("g.co") || text.contains("bit.ly")
+            ) {
+                val conn = (URL(text).openConnection() as HttpURLConnection).apply {
+                    instanceFollowRedirects = false
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                    requestMethod = "HEAD"
+                    setRequestProperty("User-Agent", "Mozilla/5.0")
+                }
+                val location = conn.getHeaderField("Location")
+                conn.disconnect()
+                location ?: text
+            } else {
+                text
+            }
+        } catch (_: Throwable) {
+            text
+        }
+
+        // Prefer explicit coordinates wherever they appear in the URL
+        Regex("""[@!/=](-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})""")
+            .find(expanded)
+            ?.let { return@withContext "${'$'}{it.groupValues[1]},${'$'}{it.groupValues[2]}" }
+
+        Regex("""[?&]q=([^&]+)""").find(expanded)?.let {
+            return@withContext java.net.URLDecoder.decode(it.groupValues[1], "UTF-8")
+        }
+
+        Regex("""/place/([^/@?]+)""").find(expanded)?.let {
+            return@withContext java.net.URLDecoder.decode(it.groupValues[1], "UTF-8")
+                .replace('+', ' ')
+        }
+
+        expanded
+    }
+
     /** Last failure reason from the API, shown on screen for diagnosis. */
     @Volatile
     var lastError: String? = null

@@ -121,9 +121,11 @@ fun MeridianScreen(
         routing = true
         routeError = null
         scope.launch {
+            // A shared maps link resolves to coordinates or a place name first
+            val resolved = com.ziyad.carlinkit.RouteService.resolveDestination(destination)
             val r = com.ziyad.carlinkit.RouteService.fetchRoute(
                 com.google.android.gms.maps.model.LatLng(ll.first, ll.second),
-                destination
+                resolved
             )
             routing = false
             // Stay inside the launcher on failure; offer the handoff, never force it.

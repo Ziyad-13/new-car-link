@@ -234,11 +234,11 @@ class DestinationServer(private val context: Context) {
 <body>
   <div class="card">
     <h1>Send to car</h1>
-    <p>Type a destination and it appears on the car screen.</p>
+    <p>Type a destination, or paste a link shared from Maps.</p>
     <label for="pin" id="pinLabel">PIN shown on the car</label>
     <input id="pin" inputmode="numeric" placeholder="0000" value="$prefillPin">
     <label for="q">Destination</label>
-    <input id="q" placeholder="Address or place">
+    <input id="q" placeholder="Address, place, or a maps link">
     <button onclick="send()">SEND</button>
     <div id="status"></div>
   </div>
