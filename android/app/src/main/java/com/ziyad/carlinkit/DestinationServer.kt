@@ -59,9 +59,9 @@ class DestinationServer(private val context: Context) {
     private val _address = MutableStateFlow<String?>(null)
     val address: StateFlow<String?> = _address
 
-    /** URL to encode in the QR code: opens the page with the PIN pre-filled. */
-    val pairingUrl: String
-        get() = _address.value?.let { "$it/?pin=${_pin.value}" } ?: ""
+    /** URL to encode in the QR code: opens the page with the PIN applied. */
+    val pairingUrl: String?
+        get() = _address.value?.let { "$it/p/${_pin.value}" }
 
     /** Destination pushed from the phone, consumed once by the UI. */
     private val _incoming = MutableStateFlow<String?>(null)
@@ -103,6 +103,12 @@ class DestinationServer(private val context: Context) {
             val path = requestLine.split(" ").getOrNull(1) ?: "/"
 
             when {
+                // Scanned QR lands here: PIN travels in the URL, so the page
+                // opens ready to use with nothing to type.
+                path.startsWith("/p/") -> {
+                    val scanned = path.removePrefix("/p/").substringBefore("?")
+                    respond(writer, 200, "text/html", page(scanned))
+                }
                 path.startsWith("/go?") -> {
                     val params = parseQuery(path.substringAfter("?"))
                     val sentPin = params["pin"]
@@ -222,13 +228,14 @@ class DestinationServer(private val context: Context) {
     background: #8FADE0; color: #11141A; border: 0; border-radius: 10px;
   }
   #status { margin-top: 14px; font-size: 13px; min-height: 18px; }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
   <div class="card">
     <h1>Send to car</h1>
     <p>Type a destination and it appears on the car screen.</p>
-    <label for="pin">PIN shown on the car</label>
+    <label for="pin" id="pinLabel">PIN shown on the car</label>
     <input id="pin" inputmode="numeric" placeholder="0000" value="$prefillPin">
     <label for="q">Destination</label>
     <input id="q" placeholder="Address or place">
@@ -236,6 +243,12 @@ class DestinationServer(private val context: Context) {
     <div id="status"></div>
   </div>
 <script>
+// Arrived by QR: the PIN is already filled, so get it out of the way.
+if (document.getElementById('pin').value) {
+  document.getElementById('pin').classList.add('hidden');
+  document.getElementById('pinLabel').classList.add('hidden');
+  document.getElementById('q').focus();
+}
 async function send() {
   const pin = document.getElementById('pin').value.trim();
   const q = document.getElementById('q').value.trim();

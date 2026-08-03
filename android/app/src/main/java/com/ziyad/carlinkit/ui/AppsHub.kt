@@ -176,7 +176,7 @@ fun AppsHub(
                         modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
                     )
                     QrCode(
-                        content = bridge.destinationServer.pairingUrl,
+                        content = bridge.destinationServer.pairingUrl ?: "",
                         size = 210.dp
                     )
                     Text(
