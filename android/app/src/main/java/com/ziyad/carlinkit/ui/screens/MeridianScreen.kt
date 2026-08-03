@@ -318,10 +318,10 @@ fun MeridianScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            failed,
+                            com.ziyad.carlinkit.RouteService.lastError ?: failed,
                             color = c.sub,
-                            fontSize = 11.sp,
-                            maxLines = 1,
+                            fontSize = 10.sp,
+                            maxLines = 2,
                             modifier = Modifier.padding(top = 2.dp)
                         )
                         Row(modifier = Modifier.padding(top = 8.dp)) {

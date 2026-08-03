@@ -20,6 +20,11 @@ android {
         val mapsKey = System.getenv("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsKey
         buildConfigField("String", "MAPS_KEY", "\"" + mapsKey + "\"")
+
+        // Directions is a web service: it cannot use the Android-app key
+        // restriction, so it gets its own key restricted to that one API.
+        val directionsKey = System.getenv("DIRECTIONS_API_KEY") ?: mapsKey
+        buildConfigField("String", "DIRECTIONS_KEY", "\"" + directionsKey + "\"")
         vectorDrawables {
             useSupportLibrary = true
         }

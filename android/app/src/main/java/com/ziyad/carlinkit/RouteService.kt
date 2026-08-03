@@ -23,6 +23,11 @@ data class Route(
 
 object RouteService {
 
+    /** Last failure reason from the API, shown on screen for diagnosis. */
+    @Volatile
+    var lastError: String? = null
+        private set
+
     /**
      * Ask the Directions API for a driving route from [origin] to [query].
      * Returns null when the key is missing, the network fails, or no route
@@ -30,7 +35,7 @@ object RouteService {
      */
     suspend fun fetchRoute(origin: LatLng, query: String): Route? =
         withContext(Dispatchers.IO) {
-            val key = BuildConfig.MAPS_KEY
+            val key = BuildConfig.DIRECTIONS_KEY
             if (key.isBlank() || query.isBlank()) return@withContext null
 
             try {
@@ -53,7 +58,12 @@ object RouteService {
                 conn.disconnect()
 
                 val json = JSONObject(body)
-                if (json.optString("status") != "OK") return@withContext null
+                val status = json.optString("status")
+                if (status != "OK") {
+                    lastError = json.optString("error_message").ifBlank { status }
+                    return@withContext null
+                }
+                lastError = null
 
                 val route = json.getJSONArray("routes").optJSONObject(0)
                     ?: return@withContext null
@@ -71,7 +81,8 @@ object RouteService {
                     durationText = leg.getJSONObject("duration").getString("text"),
                     durationSeconds = leg.getJSONObject("duration").getInt("value")
                 )
-            } catch (_: Throwable) {
+            } catch (t: Throwable) {
+                lastError = t.javaClass.simpleName + ": " + (t.message ?: "")
                 null
             }
         }
