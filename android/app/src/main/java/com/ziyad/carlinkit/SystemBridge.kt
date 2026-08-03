@@ -36,6 +36,9 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     val localPlayerManager = LocalPlayerManager(ctx, audioEngine)
     val externalMedia = ExternalMediaController(ctx).also { it.start() }
 
+    /** Lets the phone push a destination over the local network. */
+    val destinationServer = DestinationServer(ctx).also { it.start() }
+
     init {
         // Sessions appear and disappear long after startup (a player launched
         // later, permission granted later). Poll so the rail always reflects
@@ -310,6 +313,7 @@ class SystemBridge(application: Application) : AndroidViewModel(application), Lo
     override fun onCleared() {
         super.onCleared()
         stopLocationUpdates()
+        try { destinationServer.stop() } catch (_: Throwable) {}
         try { externalMedia.release() } catch (_: Throwable) {}
         localPlayerManager.release()
         audioEngine.release()

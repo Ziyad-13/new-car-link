@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.runtime.collectAsState
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
 import com.ziyad.carlinkit.ui.screens.AudioScreen
@@ -116,6 +118,42 @@ fun AppsHub(
                 ) { M.cycle(ctx) }
                 HubIcon(Icons.Filled.Wifi, m) { bridge.openWifi() }
                 HubIcon(Icons.Filled.Settings, m) { bridge.openSettings() }
+            }
+        }
+
+        // Phone pairing details — parked task, so it lives here
+        val serverAddress by bridge.destinationServer.address.collectAsState()
+        val serverPin by bridge.destinationServer.pin.collectAsState()
+        if (serverAddress != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(m.card)
+                    .border(1.dp, m.line, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Filled.PhoneAndroid,
+                    null,
+                    tint = m.sub,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    "Send a destination from your phone: $serverAddress",
+                    color = m.ink,
+                    fontSize = 11.sp
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    "PIN $serverPin",
+                    color = m.accent,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 

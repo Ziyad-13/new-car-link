@@ -104,6 +104,7 @@ fun MeridianScreen(
     var route by remember { mutableStateOf<com.ziyad.carlinkit.Route?>(null) }
     var routing by remember { mutableStateOf(false) }
     var routeError by remember { mutableStateOf<String?>(null) }
+    val pushedDestination by bridge.destinationServer.incoming.collectAsState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     fun go(destination: String) {
@@ -127,6 +128,13 @@ fun MeridianScreen(
             routing = false
             // Stay inside the launcher on failure; offer the handoff, never force it.
             if (r != null) route = r else routeError = destination
+        }
+    }
+
+    LaunchedEffect(pushedDestination) {
+        pushedDestination?.let {
+            go(it)
+            bridge.destinationServer.consume()
         }
     }
 
