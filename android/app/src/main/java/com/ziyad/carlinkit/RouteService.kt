@@ -82,17 +82,61 @@ object RouteService {
      * Returns null when the key is missing, the network fails, or no route
      * exists — the caller shows the map unchanged rather than a broken state.
      */
+    /**
+     * Resolve a place name to coordinates *near the driver*.
+     *
+     * Without this, Directions interprets a bare name with no geographic
+     * anchor and can land anywhere in the country. Biasing by current position
+     * is what makes "the nearest pharmacy" mean the nearest one to us.
+     */
+    private fun geocodeNearby(origin: LatLng, query: String, key: String): String? {
+        // Already coordinates: use them as-is.
+        if (Regex("""^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$""").matches(query.trim())) {
+            return query.trim().replace(" ", "")
+        }
+        return try {
+            val url = buildString {
+                append("https://maps.googleapis.com/maps/api/place/textsearch/json")
+                append("?query=").append(URLEncoder.encode(query, "UTF-8"))
+                append("&location=").append(origin.latitude).append(',').append(origin.longitude)
+                append("&radius=50000")
+                append("&region=sa&language=ar")
+                append("&key=").append(key)
+            }
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 8000
+                readTimeout = 8000
+            }
+            val body = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            val json = JSONObject(body)
+            if (json.optString("status") != "OK") return null
+            val first = json.getJSONArray("results").optJSONObject(0) ?: return null
+            val loc = first.getJSONObject("geometry").getJSONObject("location")
+            "${'$'}{loc.getDouble("lat")},${'$'}{loc.getDouble("lng")}"
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     suspend fun fetchRoute(origin: LatLng, query: String): Route? =
         withContext(Dispatchers.IO) {
             val key = BuildConfig.DIRECTIONS_KEY
             if (key.isBlank() || query.isBlank()) return@withContext null
 
             try {
+                // Anchor the destination near the driver before routing.
+                val target = geocodeNearby(origin, query, key) ?: query
+
                 val url = buildString {
                     append("https://maps.googleapis.com/maps/api/directions/json")
                     append("?origin=").append(origin.latitude).append(',').append(origin.longitude)
-                    append("&destination=").append(URLEncoder.encode(query, "UTF-8"))
+                    append("&destination=").append(URLEncoder.encode(target, "UTF-8"))
                     append("&mode=driving")
+                    // Keeps a bare place name anchored near the driver even if
+                    // the Places lookup above was unavailable.
+                    append("&location=").append(origin.latitude).append(',').append(origin.longitude)
+                    append("&radius=50000")
                     append("&language=ar")
                     append("&region=sa")
                     append("&key=").append(key)
@@ -125,6 +169,8 @@ object RouteService {
                 Route(
                     points = decodePolyline(polyline),
                     destination = LatLng(endLoc.getDouble("lat"), endLoc.getDouble("lng")),
+                    // Show the address Google actually chose — a wrong pick
+                    // should be obvious at a glance, not discovered en route.
                     destinationName = leg.optString("end_address", query),
                     distanceText = leg.getJSONObject("distance").getString("text"),
                     durationText = leg.getJSONObject("duration").getString("text"),
