@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.runtime.collectAsState
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
@@ -121,9 +122,11 @@ fun AppsHub(
             }
         }
 
-        // Phone pairing details — parked task, so it lives here
+        // Phone pairing — scan to open, no typing
         val serverAddress by bridge.destinationServer.address.collectAsState()
         val serverPin by bridge.destinationServer.pin.collectAsState()
+        var showQr by remember { mutableStateOf(false) }
+
         if (serverAddress != null) {
             Row(
                 modifier = Modifier
@@ -132,39 +135,79 @@ fun AppsHub(
                     .clip(RoundedCornerShape(10.dp))
                     .background(m.card)
                     .border(1.dp, m.line, RoundedCornerShape(10.dp))
+                    .clickable { showQr = true }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Filled.PhoneAndroid,
+                    Icons.Filled.QrCode2,
                     null,
-                    tint = m.sub,
-                    modifier = Modifier.size(16.dp)
+                    tint = m.accent,
+                    modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    "Send a destination from your phone: $serverAddress",
+                    "Scan to send destinations from your phone",
                     color = m.ink,
                     fontSize = 11.sp
                 )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    "PIN $serverPin",
-                    color = m.accent,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "NEW",
-                    color = m.sub,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
+            }
+        }
+
+        if (showQr) {
+            androidx.compose.ui.window.Dialog(onDismissRequest = { showQr = false }) {
+                Column(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { bridge.destinationServer.regeneratePin() }
-                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                )
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(m.card)
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Scan with your phone camera",
+                        color = m.ink,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Both devices must be on the same network",
+                        color = m.sub,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
+                    )
+                    QrCode(
+                        content = bridge.destinationServer.pairingUrl,
+                        size = 210.dp
+                    )
+                    Text(
+                        "${serverAddress ?: ""}  ·  PIN $serverPin",
+                        color = m.sub,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                    Row(modifier = Modifier.padding(top = 10.dp)) {
+                        Text(
+                            "NEW PIN",
+                            color = m.sub,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { bridge.destinationServer.regeneratePin() }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                        Text(
+                            "CLOSE",
+                            color = m.accent,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { showQr = false }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+                }
             }
         }
 

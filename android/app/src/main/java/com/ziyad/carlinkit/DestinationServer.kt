@@ -59,6 +59,10 @@ class DestinationServer(private val context: Context) {
     private val _address = MutableStateFlow<String?>(null)
     val address: StateFlow<String?> = _address
 
+    /** URL to encode in the QR code: opens the page with the PIN pre-filled. */
+    val pairingUrl: String
+        get() = _address.value?.let { "$it/?pin=${_pin.value}" } ?: ""
+
     /** Destination pushed from the phone, consumed once by the UI. */
     private val _incoming = MutableStateFlow<String?>(null)
     val incoming: StateFlow<String?> = _incoming
@@ -113,7 +117,10 @@ class DestinationServer(private val context: Context) {
                         respond(writer, 200, "text/plain", "Sent to car: $destination")
                     }
                 }
-                else -> respond(writer, 200, "text/html", page())
+                else -> {
+                    val prefill = parseQuery(path.substringAfter("?", "")) ["pin"] ?: ""
+                    respond(writer, 200, "text/html", page(prefill))
+                }
             }
             writer.flush()
         }
@@ -183,7 +190,7 @@ class DestinationServer(private val context: Context) {
         return "?"
     }
 
-    private fun page(): String = """
+    private fun page(prefillPin: String = ""): String = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -222,7 +229,7 @@ class DestinationServer(private val context: Context) {
     <h1>Send to car</h1>
     <p>Type a destination and it appears on the car screen.</p>
     <label for="pin">PIN shown on the car</label>
-    <input id="pin" inputmode="numeric" placeholder="0000">
+    <input id="pin" inputmode="numeric" placeholder="0000" value="$prefillPin">
     <label for="q">Destination</label>
     <input id="q" placeholder="Address or place">
     <button onclick="send()">SEND</button>
