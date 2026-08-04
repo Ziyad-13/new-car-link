@@ -16,15 +16,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.BrightnessAuto
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Equalizer
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.BrightnessAuto
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Explore
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,8 +40,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.QrCode2
 import androidx.compose.runtime.collectAsState
 import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
@@ -92,18 +92,18 @@ fun AppsHub(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Filled.Map,
+                        Icons.Rounded.Explore,
                         contentDescription = "Back to map",
                         tint = m.card,
                         modifier = Modifier.size(22.dp)
                     )
                 }
                 Spacer(Modifier.width(4.dp))
-                HubTab("Apps", Icons.Filled.Apps, page == HubPage.APPS, m) { page = HubPage.APPS }
-                HubTab("Library", Icons.Filled.LibraryMusic, page == HubPage.LIBRARY, m) {
+                HubTab("Apps", Icons.Rounded.GridView, page == HubPage.APPS, m) { page = HubPage.APPS }
+                HubTab("Library", Icons.Rounded.Album, page == HubPage.LIBRARY, m) {
                     page = HubPage.LIBRARY
                 }
-                HubTab("Audio", Icons.Filled.Equalizer, page == HubPage.DSP, m) {
+                HubTab("Audio", Icons.Rounded.GraphicEq, page == HubPage.DSP, m) {
                     page = HubPage.DSP
                 }
             }
@@ -111,14 +111,14 @@ fun AppsHub(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 HubIcon(
                     when (M.mode) {
-                        ThemeMode.DAY -> Icons.Filled.LightMode
-                        ThemeMode.NIGHT -> Icons.Filled.DarkMode
-                        ThemeMode.AUTO -> Icons.Filled.BrightnessAuto
+                        ThemeMode.DAY -> Icons.Rounded.LightMode
+                        ThemeMode.NIGHT -> Icons.Rounded.DarkMode
+                        ThemeMode.AUTO -> Icons.Rounded.BrightnessAuto
                     },
                     m
                 ) { M.cycle(ctx) }
-                HubIcon(Icons.Filled.Wifi, m) { bridge.openWifi() }
-                HubIcon(Icons.Filled.Settings, m) { bridge.openSettings() }
+                HubIcon(Icons.Rounded.Wifi, m) { bridge.openWifi() }
+                HubIcon(Icons.Rounded.Tune, m) { bridge.openSettings() }
             }
         }
 
@@ -140,7 +140,7 @@ fun AppsHub(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Filled.QrCode2,
+                    Icons.Rounded.QrCode2,
                     null,
                     tint = m.accent,
                     modifier = Modifier.size(18.dp)

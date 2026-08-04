@@ -18,20 +18,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocalGasStation
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.rounded.Chat
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.LocalGasStation
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.Phone
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material.icons.rounded.BusinessCenter
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,10 +52,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.material.icons.filled.OpenInFull
-import androidx.compose.material.icons.filled.CloseFullscreen
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.rounded.OpenInFull
+import androidx.compose.material.icons.rounded.CloseFullscreen
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import com.ziyad.carlinkit.R
@@ -260,7 +260,7 @@ fun MeridianScreen(
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.Search, null, tint = c.sub, modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.Search, null, tint = c.sub, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(12.dp))
                 Text(stringResource(R.string.nav_search_placeholder), color = c.sub, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             }
@@ -278,8 +278,8 @@ fun MeridianScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    if (fullscreenMap) Icons.Filled.CloseFullscreen
-                    else Icons.Filled.OpenInFull,
+                    if (fullscreenMap) Icons.Rounded.CloseFullscreen
+                    else Icons.Rounded.OpenInFull,
                     contentDescription = "Toggle full screen map",
                     tint = c.ink,
                     modifier = Modifier.size(20.dp)
@@ -440,7 +440,7 @@ fun MeridianScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DestChip(
                         label = stringResource(R.string.nav_home),
-                        icon = Icons.Filled.Home,
+                        icon = Icons.Rounded.Home,
                         c = c,
                         onClick = {
                             if (homeAddr.isNullOrBlank()) editingSlot = "home"
@@ -450,7 +450,7 @@ fun MeridianScreen(
                     )
                     DestChip(
                         label = stringResource(R.string.nav_work),
-                        icon = Icons.Filled.Work,
+                        icon = Icons.Rounded.BusinessCenter,
                         c = c,
                         onClick = {
                             if (workAddr.isNullOrBlank()) editingSlot = "work"
@@ -460,7 +460,7 @@ fun MeridianScreen(
                     )
                     DestChip(
                         label = stringResource(R.string.nav_fuel),
-                        icon = Icons.Filled.LocalGasStation,
+                        icon = Icons.Rounded.LocalGasStation,
                         c = c,
                         onClick = { bridge.navigate("gas station") },
                         onLongClick = { bridge.navigate("gas station") }
@@ -506,7 +506,7 @@ private fun SearchDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Filled.Mic, null, tint = c.card, modifier = Modifier.size(26.dp))
+                Icon(Icons.Rounded.Mic, null, tint = c.card, modifier = Modifier.size(26.dp))
                 Spacer(Modifier.width(12.dp))
                 Text(
                     stringResource(R.string.nav_speak_destination),
@@ -535,7 +535,7 @@ private fun SearchDialog(
                             .padding(vertical = 12.dp, horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Filled.History, null, tint = c.sub, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Rounded.History, null, tint = c.sub, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(12.dp))
                         Text(r, color = c.ink, fontSize = 15.sp, maxLines = 1)
                     }
@@ -636,7 +636,7 @@ private fun PlaceEditorDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Filled.Mic, null, tint = c.card, modifier = Modifier.size(24.dp))
+                Icon(Icons.Rounded.Mic, null, tint = c.card, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(10.dp))
                 Text(stringResource(R.string.nav_speak_address), color = c.card, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }

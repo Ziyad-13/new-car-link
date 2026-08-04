@@ -11,12 +11,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Equalizer
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.Equalizer
+import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -97,7 +97,7 @@ fun AudioScreen(bridge: SystemBridge) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Info,
+                        imageVector = Icons.Rounded.Info,
                         contentDescription = "DSP Info",
                         tint = SafetyAmber,
                         modifier = Modifier.size(20.dp)
@@ -253,7 +253,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.GraphicEq,
+                                imageVector = Icons.Rounded.GraphicEq,
                                 contentDescription = "Bass Boost",
                                 tint = M.accent,
                                 modifier = Modifier.size(18.dp)
@@ -304,7 +304,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.VolumeUp,
+                                imageVector = Icons.Rounded.VolumeUp,
                                 contentDescription = "Loudness",
                                 tint = SafetyAmber,
                                 modifier = Modifier.size(18.dp)
@@ -351,7 +351,7 @@ fun AudioScreen(bridge: SystemBridge) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = Icons.Rounded.Warning,
                         contentDescription = "Clipping Warning",
                         tint = SafetyAmber,
                         modifier = Modifier.size(20.dp)
@@ -390,7 +390,7 @@ fun AudioScreen(bridge: SystemBridge) {
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Security,
+                            imageVector = Icons.Rounded.Security,
                             contentDescription = "Peak Limiter",
                             tint = EmeraldGreen,
                             modifier = Modifier.size(20.dp)

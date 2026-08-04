@@ -9,13 +9,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.FastRewind
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.FastForward
+import androidx.compose.material.icons.rounded.FastRewind
+import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -158,20 +158,20 @@ fun MediaScreen(bridge: SystemBridge) {
                     horizontalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     Icon(
-                        Icons.Default.SkipPrevious, "Previous", tint = M.ink,
+                        Icons.Rounded.SkipPrevious, "Previous", tint = M.ink,
                         modifier = Modifier.size(34.dp)
                             .clip(CircleShape)
                             .clickable { bridge.externalMedia.previous() }
                     )
                     Icon(
-                        if (extPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        if (extPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                         "Play/Pause", tint = M.accent,
                         modifier = Modifier.size(34.dp)
                             .clip(CircleShape)
                             .clickable { bridge.externalMedia.togglePlayPause() }
                     )
                     Icon(
-                        Icons.Default.SkipNext, "Next", tint = M.ink,
+                        Icons.Rounded.SkipNext, "Next", tint = M.ink,
                         modifier = Modifier.size(34.dp)
                             .clip(CircleShape)
                             .clickable { bridge.externalMedia.next() }
@@ -284,7 +284,7 @@ fun MediaScreen(bridge: SystemBridge) {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.LibraryMusic,
+                                imageVector = Icons.Rounded.LibraryMusic,
                                 contentDescription = "Album Art",
                                 tint = M.ink.copy(alpha = 0.6f),
                                 modifier = Modifier.size(48.dp)
@@ -354,7 +354,7 @@ fun MediaScreen(bridge: SystemBridge) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.FastRewind,
+                            imageVector = Icons.Rounded.FastRewind,
                             contentDescription = "Rewind",
                             tint = M.sub,
                             modifier = Modifier
@@ -362,7 +362,7 @@ fun MediaScreen(bridge: SystemBridge) {
                                 .clickable { bridge.localPlayerManager.seekTo((progress - 0.1f).coerceAtLeast(0f)) }
                         )
                         Icon(
-                            imageVector = Icons.Default.SkipPrevious,
+                            imageVector = Icons.Rounded.SkipPrevious,
                             contentDescription = "Previous",
                             tint = M.ink,
                             modifier = Modifier
@@ -379,14 +379,14 @@ fun MediaScreen(bridge: SystemBridge) {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
                                 tint = M.ink,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
                         Icon(
-                            imageVector = Icons.Default.SkipNext,
+                            imageVector = Icons.Rounded.SkipNext,
                             contentDescription = "Next",
                             tint = M.ink,
                             modifier = Modifier
@@ -394,7 +394,7 @@ fun MediaScreen(bridge: SystemBridge) {
                                 .clickable { bridge.localPlayerManager.nextTrack() }
                         )
                         Icon(
-                            imageVector = Icons.Default.FastForward,
+                            imageVector = Icons.Rounded.FastForward,
                             contentDescription = "Forward",
                             tint = M.sub,
                             modifier = Modifier

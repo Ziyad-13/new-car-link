@@ -19,13 +19,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Explore
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -179,7 +179,7 @@ fun ControlRail(
                         )
                     } else {
                         Icon(
-                            Icons.Filled.MusicNote,
+                            Icons.Rounded.Album,
                             null,
                             tint = RailSub,
                             modifier = Modifier.size(22.dp)
@@ -203,13 +203,13 @@ fun ControlRail(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    RailIcon(Icons.Filled.SkipPrevious, RailInk, 38) {
+                    RailIcon(Icons.Rounded.SkipPrevious, RailInk, 44) {
                         if (external) bridge.externalMedia.previous()
                         else bridge.localPlayerManager.previousTrack()
                     }
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(60.dp)
                             .clip(CircleShape)
                             .background(
                                 Brush.verticalGradient(
@@ -223,13 +223,13 @@ fun ControlRail(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = "Play or pause",
                             tint = Color(0xFF11141A),
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
-                    RailIcon(Icons.Filled.SkipNext, RailInk, 38) {
+                    RailIcon(Icons.Rounded.SkipNext, RailInk, 44) {
                         if (external) bridge.externalMedia.next()
                         else bridge.localPlayerManager.nextTrack()
                     }
@@ -246,8 +246,8 @@ fun ControlRail(
                     .padding(vertical = 5.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                RailTab(Icons.Filled.Map, !appsSelected, onHome)
-                RailTab(Icons.Filled.Apps, appsSelected, onApps)
+                RailTab(Icons.Rounded.Explore, !appsSelected, onHome)
+                RailTab(Icons.Rounded.GridView, appsSelected, onApps)
             }
         }
     }
@@ -276,8 +276,8 @@ private fun GlassPanel(
 private fun RailTab(icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(50.dp)
-            .clip(RoundedCornerShape(13.dp))
+            .size(54.dp)
+            .clip(RoundedCornerShape(14.dp))
             .then(
                 if (selected) Modifier.background(RailAccent.copy(alpha = 0.22f))
                 else Modifier
@@ -289,7 +289,7 @@ private fun RailTab(icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
             icon,
             null,
             tint = if (selected) RailAccent else RailSub,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(26.dp)
         )
     }
 }
@@ -303,6 +303,6 @@ private fun RailIcon(icon: ImageVector, tint: Color, size: Int, onClick: () -> U
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, null, tint = tint, modifier = Modifier.size((size * 0.55).dp))
+        Icon(icon, null, tint = tint, modifier = Modifier.size((size * 0.62).dp))
     }
 }
