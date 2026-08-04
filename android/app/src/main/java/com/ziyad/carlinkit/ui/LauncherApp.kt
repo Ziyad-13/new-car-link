@@ -34,7 +34,6 @@ import com.ziyad.carlinkit.SystemBridge
 import com.ziyad.carlinkit.ui.screens.AppsScreen
 import com.ziyad.carlinkit.ui.screens.AudioScreen
 import com.ziyad.carlinkit.ui.screens.BootScreen
-import com.ziyad.carlinkit.ui.screens.HomeScreen
 import com.ziyad.carlinkit.ui.screens.MeridianScreen
 import com.ziyad.carlinkit.ui.theme.MeridianDay
 import com.ziyad.carlinkit.ui.theme.MeridianNight
