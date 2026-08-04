@@ -243,7 +243,11 @@ fun MeridianScreen(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(start = 196.dp, end = 24.dp, top = 18.dp)
+                    .padding(
+                        start = if (fullscreenMap) 18.dp else 188.dp,
+                        end = 74.dp,
+                        top = 18.dp
+                    )
                     .fillMaxWidth()
                     .height(48.dp)
                     .clip(CircleShape)
@@ -376,7 +380,11 @@ fun MeridianScreen(
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 196.dp, bottom = 18.dp, end = 18.dp)
+                    .padding(
+                        start = if (fullscreenMap) 18.dp else 188.dp,
+                        bottom = 18.dp,
+                        end = 18.dp
+                    )
             ) {
                 routeError?.let { failed ->
                     Column(

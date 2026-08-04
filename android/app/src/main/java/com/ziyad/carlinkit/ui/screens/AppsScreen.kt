@@ -71,7 +71,7 @@ fun AppsScreen(bridge: SystemBridge) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.apps_title), color = M.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            
 
             // Minimalist Search Bar
             Row(

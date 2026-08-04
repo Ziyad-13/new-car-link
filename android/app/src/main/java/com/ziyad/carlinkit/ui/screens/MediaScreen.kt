@@ -181,22 +181,22 @@ fun MediaScreen(bridge: SystemBridge) {
         }
 
         // Header — Meridian spec: 17sp bold title, source chips on the right
-        com.ziyad.carlinkit.ui.theme.ScreenHeader(title = stringResource(R.string.media_title)) {
-            com.ziyad.carlinkit.ui.theme.MChip(
-                label = if (showDiag) stringResource(R.string.media_diag_hide) else stringResource(R.string.media_diag_show),
-                selected = showDiag
-            ) {
-                diagText = bridge.externalMedia.diagnostics()
-                showDiag = !showDiag
-            }
-            com.ziyad.carlinkit.ui.theme.MChip(
-                label = nowSource ?: stringResource(R.string.media_external),
-                selected = nowTitle != null
-            ) {}
-            com.ziyad.carlinkit.ui.theme.MChip(
-                label = stringResource(R.string.media_library),
-                selected = nowTitle == null
-            ) {}
+
+        if (!showDiag) {
+            Text(
+                stringResource(R.string.media_diag_show),
+                color = M.sub,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable {
+                        diagText = bridge.externalMedia.diagnostics()
+                        showDiag = true
+                    }
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            )
         }
 
         if (showDiag) {
@@ -222,6 +222,16 @@ fun MediaScreen(bridge: SystemBridge) {
                     modifier = Modifier.padding(top = 8.dp)
                 )
                 Row(modifier = Modifier.padding(top = 10.dp)) {
+                    Text(
+                        stringResource(R.string.media_diag_hide),
+                        color = M.sub,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showDiag = false }
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    )
                     Text(
                         stringResource(R.string.media_refresh),
                         color = M.accent,
