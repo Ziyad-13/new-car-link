@@ -1,5 +1,7 @@
 package com.ziyad.carlinkit.ui
 
+import com.ziyad.carlinkit.ui.theme.MesaIcons
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,9 +60,9 @@ import java.util.Date
 import java.util.Locale
 
 // Translucent dark glass: the map shows through, but text stays legible.
-private val GlassTop = Color(0xE614161A)
-private val GlassBottom = Color(0xE61B1F26)
-private val GlassEdge = Color(0x33FFFFFF)
+private val GlassTop = Color(0xEB14161A)
+private val GlassBottom = Color(0xEB1B1F26)
+private val GlassEdge = Color(0x24FFFFFF)
 private val PanelFill = Color(0x1AFFFFFF)
 private val PanelEdge = Color(0x1FFFFFFF)
 private val RailInk = Color(0xFFF2EFE7)
@@ -142,12 +144,13 @@ fun ControlRail(
 
             // ── 1. Status ────────────────────────────────────────────
             GlassPanel {
-                Text(time, color = RailInk, fontSize = 21.sp, fontFamily = FontFamily.Serif)
+                Text(time, color = RailInk.copy(alpha = 0.60f), fontSize = 21.sp, fontFamily = FontFamily.Serif)
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         speed.toString(),
-                        color = RailAccent,
+                        color = RailInk,
                         fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Serif
                     )
                     Spacer(Modifier.width(5.dp))
@@ -179,7 +182,7 @@ fun ControlRail(
                         )
                     } else {
                         Icon(
-                            Icons.Rounded.Album,
+                            MesaIcons.Album,
                             null,
                             tint = RailSub,
                             modifier = Modifier.size(22.dp)
@@ -195,7 +198,7 @@ fun ControlRail(
                     maxLines = 1,
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                Text(text = artist ?: "—", color = RailSub, fontSize = 9.sp, maxLines = 1)
+                Text(text = artist ?: "—", color = RailInk.copy(alpha = 0.55f), fontSize = 11.sp, maxLines = 1)
 
                 Spacer(Modifier.height(10.dp))
 
@@ -203,7 +206,7 @@ fun ControlRail(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    RailIcon(Icons.Rounded.SkipPrevious, RailInk, 44) {
+                    RailIcon(MesaIcons.SkipPrevious, RailInk, 44) {
                         if (external) bridge.externalMedia.previous()
                         else bridge.localPlayerManager.previousTrack()
                     }
@@ -223,13 +226,13 @@ fun ControlRail(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            if (playing) MesaIcons.Pause else MesaIcons.Play,
                             contentDescription = "Play or pause",
                             tint = Color(0xFF11141A),
                             modifier = Modifier.size(30.dp)
                         )
                     }
-                    RailIcon(Icons.Rounded.SkipNext, RailInk, 44) {
+                    RailIcon(MesaIcons.SkipNext, RailInk, 44) {
                         if (external) bridge.externalMedia.next()
                         else bridge.localPlayerManager.nextTrack()
                     }
@@ -246,8 +249,8 @@ fun ControlRail(
                     .padding(vertical = 5.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                RailTab(Icons.Rounded.Explore, !appsSelected, onHome)
-                RailTab(Icons.Rounded.GridView, appsSelected, onApps)
+                RailTab(MesaIcons.Navigate, !appsSelected, onHome)
+                RailTab(MesaIcons.Apps, appsSelected, onApps)
             }
         }
     }

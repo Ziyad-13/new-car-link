@@ -1,5 +1,7 @@
 package com.ziyad.carlinkit.ui.screens
 
+import com.ziyad.carlinkit.ui.theme.MesaIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -260,7 +262,7 @@ fun MeridianScreen(
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Rounded.Search, null, tint = c.sub, modifier = Modifier.size(20.dp))
+                Icon(MesaIcons.Search, null, tint = c.sub, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(12.dp))
                 Text(stringResource(R.string.nav_search_placeholder), color = c.sub, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             }
@@ -278,8 +280,8 @@ fun MeridianScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    if (fullscreenMap) Icons.Rounded.CloseFullscreen
-                    else Icons.Rounded.OpenInFull,
+                    if (fullscreenMap) MesaIcons.Expand
+                    else MesaIcons.Expand,
                     contentDescription = "Toggle full screen map",
                     tint = c.ink,
                     modifier = Modifier.size(20.dp)
@@ -440,7 +442,7 @@ fun MeridianScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DestChip(
                         label = stringResource(R.string.nav_home),
-                        icon = Icons.Rounded.Home,
+                        icon = MesaIcons.Home,
                         c = c,
                         onClick = {
                             if (homeAddr.isNullOrBlank()) editingSlot = "home"
@@ -450,7 +452,7 @@ fun MeridianScreen(
                     )
                     DestChip(
                         label = stringResource(R.string.nav_work),
-                        icon = Icons.Rounded.BusinessCenter,
+                        icon = MesaIcons.Work,
                         c = c,
                         onClick = {
                             if (workAddr.isNullOrBlank()) editingSlot = "work"
@@ -460,7 +462,7 @@ fun MeridianScreen(
                     )
                     DestChip(
                         label = stringResource(R.string.nav_fuel),
-                        icon = Icons.Rounded.LocalGasStation,
+                        icon = MesaIcons.Fuel,
                         c = c,
                         onClick = { bridge.navigate("gas station") },
                         onLongClick = { bridge.navigate("gas station") }

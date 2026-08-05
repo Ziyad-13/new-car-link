@@ -20,7 +20,7 @@ data class MeridianColors(
 val MeridianDay = MeridianColors(
     bg = Color(0xFFF6F3EC),
     ink = Color(0xFF23281F),
-    sub = Color(0xFF8A8676),
+    sub = Color(0xFF6B675A),
     line = Color(0xFFDDD7C7),
     card = Color(0xFFFFFFFF),
     map = Color(0xFFEDE8DA),

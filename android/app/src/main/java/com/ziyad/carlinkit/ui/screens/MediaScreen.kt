@@ -1,5 +1,7 @@
 package com.ziyad.carlinkit.ui.screens
 
+import com.ziyad.carlinkit.ui.theme.MesaIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -158,20 +160,20 @@ fun MediaScreen(bridge: SystemBridge) {
                     horizontalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     Icon(
-                        Icons.Rounded.SkipPrevious, "Previous", tint = M.ink,
+                        MesaIcons.SkipPrevious, "Previous", tint = M.ink,
                         modifier = Modifier.size(34.dp)
                             .clip(CircleShape)
                             .clickable { bridge.externalMedia.previous() }
                     )
                     Icon(
-                        if (extPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        if (extPlaying) MesaIcons.Pause else MesaIcons.Play,
                         "Play/Pause", tint = M.accent,
                         modifier = Modifier.size(34.dp)
                             .clip(CircleShape)
                             .clickable { bridge.externalMedia.togglePlayPause() }
                     )
                     Icon(
-                        Icons.Rounded.SkipNext, "Next", tint = M.ink,
+                        MesaIcons.SkipNext, "Next", tint = M.ink,
                         modifier = Modifier.size(34.dp)
                             .clip(CircleShape)
                             .clickable { bridge.externalMedia.next() }
@@ -362,7 +364,7 @@ fun MediaScreen(bridge: SystemBridge) {
                                 .clickable { bridge.localPlayerManager.seekTo((progress - 0.1f).coerceAtLeast(0f)) }
                         )
                         Icon(
-                            imageVector = Icons.Rounded.SkipPrevious,
+                            imageVector = MesaIcons.SkipPrevious,
                             contentDescription = "Previous",
                             tint = M.ink,
                             modifier = Modifier
@@ -379,14 +381,14 @@ fun MediaScreen(bridge: SystemBridge) {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                imageVector = if (isPlaying) MesaIcons.Pause else MesaIcons.Play,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
                                 tint = M.ink,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
                         Icon(
-                            imageVector = Icons.Rounded.SkipNext,
+                            imageVector = MesaIcons.SkipNext,
                             contentDescription = "Next",
                             tint = M.ink,
                             modifier = Modifier

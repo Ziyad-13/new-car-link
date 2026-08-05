@@ -1,5 +1,7 @@
 package com.ziyad.carlinkit.ui.screens
 
+import com.ziyad.carlinkit.ui.theme.MesaIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -85,7 +87,7 @@ fun AppsScreen(bridge: SystemBridge) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Search,
+                    imageVector = MesaIcons.Search,
                     contentDescription = "Search icon",
                     tint = M.sub,
                     modifier = Modifier.size(16.dp)

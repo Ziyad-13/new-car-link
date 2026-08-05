@@ -1,5 +1,7 @@
 package com.ziyad.carlinkit.ui.screens
 
+import com.ziyad.carlinkit.ui.theme.MesaIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -253,7 +255,7 @@ fun AudioScreen(bridge: SystemBridge) {
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Rounded.GraphicEq,
+                                imageVector = MesaIcons.Equaliser,
                                 contentDescription = "Bass Boost",
                                 tint = M.accent,
                                 modifier = Modifier.size(18.dp)

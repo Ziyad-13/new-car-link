@@ -1,5 +1,7 @@
 package com.ziyad.carlinkit.ui
 
+import com.ziyad.carlinkit.ui.theme.MesaIcons
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,18 +94,18 @@ fun AppsHub(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Rounded.Explore,
+                        MesaIcons.Navigate,
                         contentDescription = "Back to map",
                         tint = m.card,
                         modifier = Modifier.size(22.dp)
                     )
                 }
                 Spacer(Modifier.width(4.dp))
-                HubTab("Apps", Icons.Rounded.GridView, page == HubPage.APPS, m) { page = HubPage.APPS }
-                HubTab("Library", Icons.Rounded.Album, page == HubPage.LIBRARY, m) {
+                HubTab("Apps", MesaIcons.Apps, page == HubPage.APPS, m) { page = HubPage.APPS }
+                HubTab("Library", MesaIcons.Album, page == HubPage.LIBRARY, m) {
                     page = HubPage.LIBRARY
                 }
-                HubTab("Audio", Icons.Rounded.GraphicEq, page == HubPage.DSP, m) {
+                HubTab("Audio", MesaIcons.Equaliser, page == HubPage.DSP, m) {
                     page = HubPage.DSP
                 }
             }
@@ -111,14 +113,14 @@ fun AppsHub(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 HubIcon(
                     when (M.mode) {
-                        ThemeMode.DAY -> Icons.Rounded.LightMode
-                        ThemeMode.NIGHT -> Icons.Rounded.DarkMode
-                        ThemeMode.AUTO -> Icons.Rounded.BrightnessAuto
+                        ThemeMode.DAY -> MesaIcons.Day
+                        ThemeMode.NIGHT -> MesaIcons.Night
+                        ThemeMode.AUTO -> MesaIcons.Auto
                     },
                     m
                 ) { M.cycle(ctx) }
-                HubIcon(Icons.Rounded.Wifi, m) { bridge.openWifi() }
-                HubIcon(Icons.Rounded.Tune, m) { bridge.openSettings() }
+                HubIcon(MesaIcons.Wifi, m) { bridge.openWifi() }
+                HubIcon(MesaIcons.Settings, m) { bridge.openSettings() }
             }
         }
 
