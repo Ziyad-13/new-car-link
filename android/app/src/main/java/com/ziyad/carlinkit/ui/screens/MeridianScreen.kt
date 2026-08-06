@@ -297,7 +297,7 @@ fun MeridianScreen(
             }
 
             // Search pill — stands down while a turn instruction is showing
-            if (guidance == null) Row(
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(
@@ -368,113 +368,6 @@ fun MeridianScreen(
                 }
             }
 
-            // Turn instruction — top of the map, the one thing that must be
-            // readable in a single glance while moving.
-            guidance?.let { g ->
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(
-                            start = if (fullscreenMap) 18.dp else 188.dp,
-                            top = 18.dp,
-                            end = 18.dp
-                        )
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(c.accent)
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        maneuverIcon(g.maneuver),
-                        contentDescription = null,
-                        tint = c.card,
-                        modifier = Modifier.size(34.dp)
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    Column {
-                        Text(
-                            if (rerouting) "Recalculating…"
-                            else com.ziyad.carlinkit.NavigationTracker
-                                .formatDistance(g.distanceToTurnMeters),
-                            color = c.card,
-                            fontSize = if (rerouting) 16.sp else 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            g.instruction,
-                            color = c.card.copy(alpha = 0.85f),
-                            fontSize = 12.sp,
-                            maxLines = 2
-                        )
-                    }
-                }
-            }
-
-            // Trip readout — bottom right, sized to be read at a glance
-            if (route != null || routing) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 18.dp, bottom = 18.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(c.card)
-                        .border(1.dp, c.line, RoundedCornerShape(16.dp))
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    if (routing) {
-                        Text("Finding route…", color = c.sub, fontSize = 13.sp)
-                    } else route?.let { r ->
-                        // Minutes dominate: it is the one number that matters
-                        // while moving.
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                r.durationText.filter { it.isDigit() }
-                                    .ifBlank { r.durationText },
-                                color = c.ink,
-                                fontSize = 40.sp,
-                                fontFamily = FontFamily.Serif,
-                                lineHeight = 40.sp
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                "min",
-                                color = c.sub,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 6.dp)
-                            )
-                        }
-                        Text(
-                            r.distanceText,
-                            color = c.accent,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        // Just the first part of the address — the full string
-                        // is unreadable while driving.
-                        Text(
-                            r.destinationName.substringBefore(",").trim(),
-                            color = c.sub,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                        Text(
-                            "END",
-                            color = c.sub,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { route = null }
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                        )
-                    }
-                }
-            }
-
             // Error card + destination chips
             Column(
                 modifier = Modifier
@@ -534,7 +427,87 @@ fun MeridianScreen(
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
+                // Guidance and trip data in one card, in the same place and
+                // the same language as everything else on this screen.
+                if (route != null || routing) {
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(c.card)
+                            .border(1.dp, c.line, RoundedCornerShape(13.dp))
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        if (routing) {
+                            Text("Finding route…", color = c.sub, fontSize = 13.sp)
+                        } else route?.let { r ->
+                            guidance?.let { g ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        maneuverIcon(g.maneuver),
+                                        contentDescription = null,
+                                        tint = c.accent,
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            if (rerouting) "Recalculating…"
+                                            else com.ziyad.carlinkit.NavigationTracker
+                                                .formatDistance(g.distanceToTurnMeters),
+                                            color = c.ink,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            g.instruction,
+                                            color = c.ink.copy(alpha = 0.75f),
+                                            fontSize = 13.sp,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                                Box(
+                                    Modifier
+                                        .padding(vertical = 10.dp)
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(c.line)
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    r.durationText,
+                                    color = c.accent,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(" · ", color = c.sub, fontSize = 13.sp)
+                                Text(r.distanceText, color = c.sub, fontSize = 13.sp)
+                                Spacer(Modifier.width(14.dp))
+                                Text(
+                                    "END",
+                                    color = c.sub,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { route = null }
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                            Text(
+                                r.destinationName.substringBefore(",").trim(),
+                                color = c.ink,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DestChip(
@@ -923,16 +896,16 @@ private fun GoogleMapPanel(
             // Casing beneath the route so it stays legible over any map colour
             com.google.maps.android.compose.Polyline(
                 points = r.points,
-                color = androidx.compose.ui.graphics.Color(0xFF2B3446),
-                width = 26f,
+                color = androidx.compose.ui.graphics.Color(0xFF1E2530),
+                width = 28f,
                 jointType = com.google.android.gms.maps.model.JointType.ROUND,
                 startCap = com.google.android.gms.maps.model.RoundCap(),
                 endCap = com.google.android.gms.maps.model.RoundCap()
             )
             com.google.maps.android.compose.Polyline(
                 points = r.points,
-                color = androidx.compose.ui.graphics.Color(0xFF7C9AD4),
-                width = 16f,
+                color = androidx.compose.ui.graphics.Color(0xFF5B6C8F),
+                width = 18f,
                 jointType = com.google.android.gms.maps.model.JointType.ROUND,
                 startCap = com.google.android.gms.maps.model.RoundCap(),
                 endCap = com.google.android.gms.maps.model.RoundCap()
