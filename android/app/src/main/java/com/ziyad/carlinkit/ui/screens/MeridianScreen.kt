@@ -119,6 +119,10 @@ fun MeridianScreen(
         mutableStateOf<com.ziyad.carlinkit.NavigationTracker.Guidance?>(null)
     }
     var stepFloor by remember { mutableStateOf(0) }
+    var rerouting by remember { mutableStateOf(false) }
+    // Consecutive off-route fixes. One stray reading is noise; several in a
+    // row means the driver really has left the route.
+    var offRouteStreak by remember { mutableStateOf(0) }
     val pushedDestination by bridge.destinationServer.incoming.collectAsState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
@@ -159,13 +163,31 @@ fun MeridianScreen(
             guidance = null
             return@LaunchedEffect
         }
-        val g = com.ziyad.carlinkit.NavigationTracker.guidanceFor(
-            r,
-            com.google.android.gms.maps.model.LatLng(ll.first, ll.second),
-            stepFloor
-        )
+        val here = com.google.android.gms.maps.model.LatLng(ll.first, ll.second)
+        val g = com.ziyad.carlinkit.NavigationTracker.guidanceFor(r, here, stepFloor)
         guidance = g
         if (g != null && g.stepIndex > stepFloor) stepFloor = g.stepIndex
+
+        // Off-route detection and recalculation
+        if (g == null || rerouting) return@LaunchedEffect
+        val off = g.offRouteMeters >
+            com.ziyad.carlinkit.NavigationTracker.OFF_ROUTE_THRESHOLD_METERS
+        offRouteStreak = if (off) offRouteStreak + 1 else 0
+
+        if (offRouteStreak >= 3) {
+            rerouting = true
+            offRouteStreak = 0
+            // Recalculate from where we actually are, to the same destination.
+            val fresh = com.ziyad.carlinkit.RouteService.fetchRoute(
+                here,
+                r.destination.latitude.toString() + "," + r.destination.longitude.toString()
+            )
+            if (fresh != null) {
+                route = fresh.copy(destinationName = r.destinationName)
+                stepFloor = 0
+            }
+            rerouting = false
+        }
     }
 
     LaunchedEffect(pushedDestination) {
@@ -371,10 +393,11 @@ fun MeridianScreen(
                     Spacer(Modifier.width(14.dp))
                     Column {
                         Text(
-                            com.ziyad.carlinkit.NavigationTracker
+                            if (rerouting) "Recalculating…"
+                            else com.ziyad.carlinkit.NavigationTracker
                                 .formatDistance(g.distanceToTurnMeters),
                             color = c.card,
-                            fontSize = 22.sp,
+                            fontSize = if (rerouting) 16.sp else 22.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(

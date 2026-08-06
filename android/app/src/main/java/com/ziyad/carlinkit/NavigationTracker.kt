@@ -22,8 +22,19 @@ object NavigationTracker {
         val maneuver: String,
         val distanceToTurnMeters: Int,
         val stepIndex: Int,
-        val isFinal: Boolean
+        val isFinal: Boolean,
+        /** Metres from the route line — large values mean we have left it. */
+        val offRouteMeters: Int
     )
+
+    /**
+     * How far off the line counts as "no longer on this route".
+     *
+     * Generous on purpose: GPS on a head unit drifts, dual carriageways sit
+     * tens of metres apart, and a needless re-route is more disruptive than a
+     * moment of stale guidance.
+     */
+    const val OFF_ROUTE_THRESHOLD_METERS = 70
 
     /**
      * @param stepFloor never return a step before this, so a GPS wobble cannot
@@ -49,13 +60,31 @@ object NavigationTracker {
         }
 
         val step = route.steps[best]
+
+        // Distance to the route as drawn, not merely to this step: after a
+        // wrong turn the nearest step can still be close while the driver is
+        // plainly somewhere else.
+        val offRoute = distanceToPolyline(position, route.points)
+
         return Guidance(
             instruction = step.instruction,
             maneuver = step.maneuver,
             distanceToTurnMeters = haversine(position, step.end).toInt(),
             stepIndex = best,
-            isFinal = best == route.steps.lastIndex
+            isFinal = best == route.steps.lastIndex,
+            offRouteMeters = offRoute.toInt()
         )
+    }
+
+    /** Shortest distance from a point to any segment of the route line. */
+    private fun distanceToPolyline(p: LatLng, points: List<LatLng>): Double {
+        if (points.size < 2) return Double.MAX_VALUE
+        var min = Double.MAX_VALUE
+        for (i in 0 until points.lastIndex) {
+            val d = distanceToSegment(p, points[i], points[i + 1])
+            if (d < min) min = d
+        }
+        return min
     }
 
     /** Metres between two points on the earth's surface. */
