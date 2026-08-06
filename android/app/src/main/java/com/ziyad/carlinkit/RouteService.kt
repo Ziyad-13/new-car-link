@@ -12,13 +12,24 @@ import java.net.URLEncoder
  * A route drawn on the launcher's own map, rather than handing the driver off
  * to another app.
  */
+/** One turn in the route: what to do, where, and how far away it is. */
+data class RouteStep(
+    val instruction: String,
+    val maneuver: String,
+    val start: LatLng,
+    val end: LatLng,
+    val distanceMeters: Int,
+    val distanceText: String
+)
+
 data class Route(
     val points: List<LatLng>,
     val destination: LatLng,
     val destinationName: String,
     val distanceText: String,
     val durationText: String,
-    val durationSeconds: Int
+    val durationSeconds: Int,
+    val steps: List<RouteStep> = emptyList()
 )
 
 object RouteService {
@@ -166,6 +177,31 @@ object RouteService {
                 val polyline = route.getJSONObject("overview_polyline").getString("points")
                 val endLoc = leg.getJSONObject("end_location")
 
+                // Turn-by-turn steps: the HTML in the instruction is meant for
+                // a web page, so it is stripped to plain text here.
+                val steps = mutableListOf<RouteStep>()
+                val stepArray = leg.optJSONArray("steps")
+                if (stepArray != null) {
+                    for (i in 0 until stepArray.length()) {
+                        val st = stepArray.getJSONObject(i)
+                        val sl = st.getJSONObject("start_location")
+                        val el = st.getJSONObject("end_location")
+                        steps.add(
+                            RouteStep(
+                                instruction = st.optString("html_instructions")
+                                    .replace(Regex("<[^>]*>"), " ")
+                                    .replace(Regex("\\s+"), " ")
+                                    .trim(),
+                                maneuver = st.optString("maneuver"),
+                                start = LatLng(sl.getDouble("lat"), sl.getDouble("lng")),
+                                end = LatLng(el.getDouble("lat"), el.getDouble("lng")),
+                                distanceMeters = st.getJSONObject("distance").getInt("value"),
+                                distanceText = st.getJSONObject("distance").getString("text")
+                            )
+                        )
+                    }
+                }
+
                 Route(
                     points = decodePolyline(polyline),
                     destination = LatLng(endLoc.getDouble("lat"), endLoc.getDouble("lng")),
@@ -174,7 +210,8 @@ object RouteService {
                     destinationName = leg.optString("end_address", query),
                     distanceText = leg.getJSONObject("distance").getString("text"),
                     durationText = leg.getJSONObject("duration").getString("text"),
-                    durationSeconds = leg.getJSONObject("duration").getInt("value")
+                    durationSeconds = leg.getJSONObject("duration").getInt("value"),
+                    steps = steps
                 )
             } catch (t: Throwable) {
                 lastError = t.javaClass.simpleName + ": " + (t.message ?: "")

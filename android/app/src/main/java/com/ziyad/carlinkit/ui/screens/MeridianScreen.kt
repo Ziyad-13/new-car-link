@@ -56,6 +56,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.CloseFullscreen
+import androidx.compose.material.icons.rounded.TurnLeft
+import androidx.compose.material.icons.rounded.TurnRight
+import androidx.compose.material.icons.rounded.TurnSlightLeft
+import androidx.compose.material.icons.rounded.TurnSlightRight
+import androidx.compose.material.icons.rounded.UTurnLeft
+import androidx.compose.material.icons.rounded.RoundaboutLeft
+import androidx.compose.material.icons.rounded.MergeType
+import androidx.compose.material.icons.rounded.ForkRight
+import androidx.compose.material.icons.rounded.Straight
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -106,6 +115,10 @@ fun MeridianScreen(
     var route by remember { mutableStateOf<com.ziyad.carlinkit.Route?>(null) }
     var routing by remember { mutableStateOf(false) }
     var routeError by remember { mutableStateOf<String?>(null) }
+    var guidance by remember {
+        mutableStateOf<com.ziyad.carlinkit.NavigationTracker.Guidance?>(null)
+    }
+    var stepFloor by remember { mutableStateOf(0) }
     val pushedDestination by bridge.destinationServer.incoming.collectAsState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
@@ -131,8 +144,28 @@ fun MeridianScreen(
             )
             routing = false
             // Stay inside the launcher on failure; offer the handoff, never force it.
-            if (r != null) route = r else routeError = destination
+            if (r != null) {
+                route = r
+                stepFloor = 0
+            } else routeError = destination
         }
+    }
+
+    // Recompute the current step whenever the car moves.
+    LaunchedEffect(latLon, route) {
+        val r = route
+        val ll = latLon
+        if (r == null || ll == null) {
+            guidance = null
+            return@LaunchedEffect
+        }
+        val g = com.ziyad.carlinkit.NavigationTracker.guidanceFor(
+            r,
+            com.google.android.gms.maps.model.LatLng(ll.first, ll.second),
+            stepFloor
+        )
+        guidance = g
+        if (g != null && g.stepIndex > stepFloor) stepFloor = g.stepIndex
     }
 
     LaunchedEffect(pushedDestination) {
@@ -241,8 +274,8 @@ fun MeridianScreen(
                 MapBackdrop(c, latLon, isNight)
             }
 
-            // Search pill
-            Row(
+            // Search pill — stands down while a turn instruction is showing
+            if (guidance == null) Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(
@@ -310,6 +343,47 @@ fun MeridianScreen(
                     Text(stringResource(R.string.nav_speed_unit), color = c.sub, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(14.dp))
                     Text(time, color = c.sub, fontSize = 13.sp)
+                }
+            }
+
+            // Turn instruction — top of the map, the one thing that must be
+            // readable in a single glance while moving.
+            guidance?.let { g ->
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(
+                            start = if (fullscreenMap) 18.dp else 188.dp,
+                            top = 18.dp,
+                            end = 18.dp
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(c.accent)
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        maneuverIcon(g.maneuver),
+                        contentDescription = null,
+                        tint = c.card,
+                        modifier = Modifier.size(34.dp)
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            com.ziyad.carlinkit.NavigationTracker
+                                .formatDistance(g.distanceToTurnMeters),
+                            color = c.card,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            g.instruction,
+                            color = c.card.copy(alpha = 0.85f),
+                            fontSize = 12.sp,
+                            maxLines = 2
+                        )
+                    }
                 }
             }
 
@@ -827,12 +901,18 @@ private fun GoogleMapPanel(
             com.google.maps.android.compose.Polyline(
                 points = r.points,
                 color = androidx.compose.ui.graphics.Color(0xFF2B3446),
-                width = 26f
+                width = 26f,
+                jointType = com.google.android.gms.maps.model.JointType.ROUND,
+                startCap = com.google.android.gms.maps.model.RoundCap(),
+                endCap = com.google.android.gms.maps.model.RoundCap()
             )
             com.google.maps.android.compose.Polyline(
                 points = r.points,
                 color = androidx.compose.ui.graphics.Color(0xFF7C9AD4),
-                width = 16f
+                width = 16f,
+                jointType = com.google.android.gms.maps.model.JointType.ROUND,
+                startCap = com.google.android.gms.maps.model.RoundCap(),
+                endCap = com.google.android.gms.maps.model.RoundCap()
             )
             com.google.maps.android.compose.Marker(
                 state = com.google.maps.android.compose.MarkerState(position = r.destination),
@@ -939,4 +1019,23 @@ private fun TapIcon(icon: ImageVector, tint: androidx.compose.ui.graphics.Color,
     ) {
         Icon(icon, null, tint = tint, modifier = Modifier.size(22.dp))
     }
+}
+
+/**
+ * Maps a Directions manoeuvre string to a glyph. Google returns a small fixed
+ * vocabulary; anything unrecognised falls back to the straight-ahead arrow
+ * rather than showing a wrong turn.
+ */
+private fun maneuverIcon(maneuver: String): ImageVector = when {
+    maneuver.contains("left", ignoreCase = true) &&
+        maneuver.contains("slight", ignoreCase = true) -> Icons.Rounded.TurnSlightLeft
+    maneuver.contains("right", ignoreCase = true) &&
+        maneuver.contains("slight", ignoreCase = true) -> Icons.Rounded.TurnSlightRight
+    maneuver.contains("uturn", ignoreCase = true) -> Icons.Rounded.UTurnLeft
+    maneuver.contains("left", ignoreCase = true) -> Icons.Rounded.TurnLeft
+    maneuver.contains("right", ignoreCase = true) -> Icons.Rounded.TurnRight
+    maneuver.contains("roundabout", ignoreCase = true) -> Icons.Rounded.RoundaboutLeft
+    maneuver.contains("merge", ignoreCase = true) -> Icons.Rounded.MergeType
+    maneuver.contains("ramp", ignoreCase = true) -> Icons.Rounded.ForkRight
+    else -> Icons.Rounded.Straight
 }
