@@ -76,6 +76,7 @@ import com.ziyad.carlinkit.ui.theme.MeridianDay
 import com.ziyad.carlinkit.ui.theme.MeridianNight
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -115,6 +116,10 @@ fun MeridianScreen(
     var route by remember { mutableStateOf<com.ziyad.carlinkit.Route?>(null) }
     var routing by remember { mutableStateOf(false) }
     var routeError by remember { mutableStateOf<String?>(null) }
+    var pendingPin by remember {
+        mutableStateOf<com.google.android.gms.maps.model.LatLng?>(null)
+    }
+    var pendingName by remember { mutableStateOf<String?>(null) }
     var guidance by remember {
         mutableStateOf<com.ziyad.carlinkit.NavigationTracker.Guidance?>(null)
     }
@@ -152,6 +157,22 @@ fun MeridianScreen(
                 route = r
                 stepFloor = 0
             } else routeError = destination
+        }
+    }
+
+    // Name the tapped point. Falls back to coordinates rather than showing
+    // nothing — an unnamed pin is still a usable destination.
+    LaunchedEffect(pendingPin) {
+        val pin = pendingPin ?: return@LaunchedEffect
+        pendingName = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                android.location.Geocoder(context, java.util.Locale.getDefault())
+                    .getFromLocation(pin.latitude, pin.longitude, 1)
+                    ?.firstOrNull()
+                    ?.let { it.thoroughfare ?: it.featureName ?: it.locality }
+            } catch (_: Throwable) {
+                null
+            } ?: String.format("%.4f, %.4f", pin.latitude, pin.longitude)
         }
     }
 
@@ -291,7 +312,12 @@ fun MeridianScreen(
                 .background(c.map)
         ) {
             if (com.ziyad.carlinkit.BuildConfig.MAPS_KEY.isNotBlank()) {
-                GoogleMapPanel(latLon, bearing, isNight, route)
+                GoogleMapPanel(latLon, bearing, isNight, route, pendingPin) { tapped ->
+                    if (route == null) {
+                        pendingPin = tapped
+                        pendingName = null
+                    }
+                }
             } else {
                 MapBackdrop(c, latLon, isNight)
             }
@@ -532,6 +558,63 @@ fun MeridianScreen(
                             )
                         }
                     }
+                }
+
+                pendingPin?.let { pin ->
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(c.card)
+                            .border(1.dp, c.line, RoundedCornerShape(13.dp))
+                            .padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                "DROPPED PIN",
+                                color = c.sub,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.4.sp
+                            )
+                            Text(
+                                pendingName ?: "…",
+                                color = c.ink,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            "GO",
+                            color = c.accent,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(9.dp))
+                                .clickable {
+                                    // Route through the existing path so recents,
+                                    // error handling and step tracking all apply.
+                                    go(pin.latitude.toString() + "," + pin.longitude.toString())
+                                    pendingPin = null
+                                }
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                        )
+                        Text(
+                            "CLEAR",
+                            color = c.sub,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(9.dp))
+                                .clickable { pendingPin = null }
+                                .padding(horizontal = 10.dp, vertical = 10.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -830,7 +913,9 @@ private fun GoogleMapPanel(
     latLon: Pair<Double, Double>?,
     bearing: Float,
     isNight: Boolean,
-    route: com.ziyad.carlinkit.Route?
+    route: com.ziyad.carlinkit.Route?,
+    pendingPin: com.google.android.gms.maps.model.LatLng? = null,
+    onMapTap: (com.google.android.gms.maps.model.LatLng) -> Unit = {}
 ) {
     val cameraPositionState = com.google.maps.android.compose.rememberCameraPositionState {
         position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
@@ -900,6 +985,7 @@ private fun GoogleMapPanel(
     com.google.maps.android.compose.GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
+        onMapClick = onMapTap,
         properties = com.google.maps.android.compose.MapProperties(
             // Blue dot showing where the car actually is
             isMyLocationEnabled = true,
@@ -919,6 +1005,12 @@ private fun GoogleMapPanel(
             rotationGesturesEnabled = false
         )
     ) {
+        pendingPin?.let { pin ->
+            com.google.maps.android.compose.Marker(
+                state = com.google.maps.android.compose.MarkerState(position = pin)
+            )
+        }
+
         route?.let { r ->
             // Casing beneath the route so it stays legible over any map colour
             com.google.maps.android.compose.Polyline(
