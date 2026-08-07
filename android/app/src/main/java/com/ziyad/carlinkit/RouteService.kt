@@ -94,6 +94,47 @@ object RouteService {
      * exists — the caller shows the map unchanged rather than a broken state.
      */
     /**
+     * Every route the API offered, best first. The single-route [fetchRoute]
+     * remains for callers that do not offer a choice.
+     */
+    suspend fun fetchRoutes(origin: LatLng, query: String): List<Route> =
+        withContext(Dispatchers.IO) {
+            val key = BuildConfig.DIRECTIONS_KEY
+            if (key.isBlank() || query.isBlank()) return@withContext emptyList()
+            try {
+                val target = geocodeNearby(origin, query, key) ?: query
+                val url = buildString {
+                    append("https://maps.googleapis.com/maps/api/directions/json")
+                    append("?origin=").append(origin.latitude).append(',').append(origin.longitude)
+                    append("&destination=").append(URLEncoder.encode(target, "UTF-8"))
+                    append("&mode=driving&alternatives=true")
+                    append("&language=ar&region=sa")
+                    append("&key=").append(key)
+                }
+                val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                }
+                val body = conn.inputStream.bufferedReader().use { it.readText() }
+                conn.disconnect()
+                val json = JSONObject(body)
+                if (json.optString("status") != "OK") {
+                    lastError = json.optString("error_message")
+                        .ifBlank { json.optString("status") }
+                    return@withContext emptyList()
+                }
+                lastError = null
+                val arr = json.getJSONArray("routes")
+                (0 until minOf(arr.length(), 3)).mapNotNull { i ->
+                    parseRoute(arr.getJSONObject(i), query)
+                }
+            } catch (t: Throwable) {
+                lastError = t.javaClass.simpleName + ": " + (t.message ?: "")
+                emptyList()
+            }
+        }
+
+    /**
      * Resolve a place name to coordinates *near the driver*.
      *
      * Without this, Directions interprets a bare name with no geographic
@@ -144,6 +185,7 @@ object RouteService {
                     append("?origin=").append(origin.latitude).append(',').append(origin.longitude)
                     append("&destination=").append(URLEncoder.encode(target, "UTF-8"))
                     append("&mode=driving")
+                    append("&alternatives=true")
                     // Keeps a bare place name anchored near the driver even if
                     // the Places lookup above was unavailable.
                     append("&location=").append(origin.latitude).append(',').append(origin.longitude)
@@ -171,48 +213,7 @@ object RouteService {
 
                 val route = json.getJSONArray("routes").optJSONObject(0)
                     ?: return@withContext null
-                val leg = route.getJSONArray("legs").optJSONObject(0)
-                    ?: return@withContext null
-
-                val polyline = route.getJSONObject("overview_polyline").getString("points")
-                val endLoc = leg.getJSONObject("end_location")
-
-                // Turn-by-turn steps: the HTML in the instruction is meant for
-                // a web page, so it is stripped to plain text here.
-                val steps = mutableListOf<RouteStep>()
-                val stepArray = leg.optJSONArray("steps")
-                if (stepArray != null) {
-                    for (i in 0 until stepArray.length()) {
-                        val st = stepArray.getJSONObject(i)
-                        val sl = st.getJSONObject("start_location")
-                        val el = st.getJSONObject("end_location")
-                        steps.add(
-                            RouteStep(
-                                instruction = st.optString("html_instructions")
-                                    .replace(Regex("<[^>]*>"), " ")
-                                    .replace(Regex("\\s+"), " ")
-                                    .trim(),
-                                maneuver = st.optString("maneuver"),
-                                start = LatLng(sl.getDouble("lat"), sl.getDouble("lng")),
-                                end = LatLng(el.getDouble("lat"), el.getDouble("lng")),
-                                distanceMeters = st.getJSONObject("distance").getInt("value"),
-                                distanceText = st.getJSONObject("distance").getString("text")
-                            )
-                        )
-                    }
-                }
-
-                Route(
-                    points = decodePolyline(polyline),
-                    destination = LatLng(endLoc.getDouble("lat"), endLoc.getDouble("lng")),
-                    // Show the address Google actually chose — a wrong pick
-                    // should be obvious at a glance, not discovered en route.
-                    destinationName = leg.optString("end_address", query),
-                    distanceText = leg.getJSONObject("distance").getString("text"),
-                    durationText = leg.getJSONObject("duration").getString("text"),
-                    durationSeconds = leg.getJSONObject("duration").getInt("value"),
-                    steps = steps
-                )
+                parseRoute(route, query)
             } catch (t: Throwable) {
                 lastError = t.javaClass.simpleName + ": " + (t.message ?: "")
                 null
@@ -223,6 +224,46 @@ object RouteService {
      * Google encodes route geometry as a compressed polyline string; this is
      * the standard decoding algorithm.
      */
+    /** Shared parsing for one route object from the Directions response. */
+    private fun parseRoute(route: JSONObject, query: String): Route? {
+        val leg = route.getJSONArray("legs").optJSONObject(0) ?: return null
+        val polyline = route.getJSONObject("overview_polyline").getString("points")
+        val endLoc = leg.getJSONObject("end_location")
+
+        val steps = mutableListOf<RouteStep>()
+        val stepArray = leg.optJSONArray("steps")
+        if (stepArray != null) {
+            for (i in 0 until stepArray.length()) {
+                val st = stepArray.getJSONObject(i)
+                val sl = st.getJSONObject("start_location")
+                val el = st.getJSONObject("end_location")
+                steps.add(
+                    RouteStep(
+                        instruction = st.optString("html_instructions")
+                            .replace(Regex("<[^>]*>"), " ")
+                            .replace(Regex("\\s+"), " ")
+                            .trim(),
+                        maneuver = st.optString("maneuver"),
+                        start = LatLng(sl.getDouble("lat"), sl.getDouble("lng")),
+                        end = LatLng(el.getDouble("lat"), el.getDouble("lng")),
+                        distanceMeters = st.getJSONObject("distance").getInt("value"),
+                        distanceText = st.getJSONObject("distance").getString("text")
+                    )
+                )
+            }
+        }
+
+        return Route(
+            points = decodePolyline(polyline),
+            destination = LatLng(endLoc.getDouble("lat"), endLoc.getDouble("lng")),
+            destinationName = leg.optString("end_address", query),
+            distanceText = leg.getJSONObject("distance").getString("text"),
+            durationText = leg.getJSONObject("duration").getString("text"),
+            durationSeconds = leg.getJSONObject("duration").getInt("value"),
+            steps = steps
+        )
+    }
+
     private fun decodePolyline(encoded: String): List<LatLng> {
         val poly = ArrayList<LatLng>()
         var index = 0

@@ -120,6 +120,10 @@ fun MeridianScreen(
         mutableStateOf<com.google.android.gms.maps.model.LatLng?>(null)
     }
     var pendingName by remember { mutableStateOf<String?>(null) }
+    // Routes offered but not yet accepted. Guidance only begins on START.
+    var proposals by remember { mutableStateOf<List<com.ziyad.carlinkit.Route>>(emptyList()) }
+    var proposalIndex by remember { mutableStateOf(0) }
+    var navigating by remember { mutableStateOf(false) }
     var guidance by remember {
         mutableStateOf<com.ziyad.carlinkit.NavigationTracker.Guidance?>(null)
     }
@@ -147,11 +151,15 @@ fun MeridianScreen(
         scope.launch {
             // A shared maps link resolves to coordinates or a place name first
             val resolved = com.ziyad.carlinkit.RouteService.resolveDestination(destination)
-            val r = com.ziyad.carlinkit.RouteService.fetchRoute(
+            val found = com.ziyad.carlinkit.RouteService.fetchRoutes(
                 com.google.android.gms.maps.model.LatLng(ll.first, ll.second),
                 resolved
             )
+            val r = found.firstOrNull()
             routing = false
+            proposals = found
+            proposalIndex = 0
+            navigating = false
             // Stay inside the launcher on failure; offer the handoff, never force it.
             if (r != null) {
                 route = r
@@ -180,7 +188,7 @@ fun MeridianScreen(
     LaunchedEffect(latLon, route) {
         val r = route
         val ll = latLon
-        if (r == null || ll == null) {
+        if (r == null || ll == null || !navigating) {
             guidance = null
             return@LaunchedEffect
         }
@@ -312,7 +320,8 @@ fun MeridianScreen(
                 .background(c.map)
         ) {
             if (com.ziyad.carlinkit.BuildConfig.MAPS_KEY.isNotBlank()) {
-                GoogleMapPanel(latLon, bearing, isNight, route, pendingPin) { tapped ->
+                GoogleMapPanel(latLon, bearing, isNight, route, navigating,
+                    guidance?.distanceToTurnMeters ?: Int.MAX_VALUE, pendingPin) { tapped ->
                     if (route == null) {
                         pendingPin = tapped
                         pendingName = null
@@ -436,8 +445,86 @@ fun MeridianScreen(
                 }
             }
 
+            // Preview: the route is drawn but guidance has not begun.
+            if (!navigating && proposals.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 18.dp, bottom = 18.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(c.card)
+                        .border(1.dp, c.line, RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        proposals[proposalIndex].destinationName.substringBefore(",").trim(),
+                        color = c.ink,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    // One row per alternative, so the trade-off is visible
+                    proposals.forEachIndexed { i, alt ->
+                        val chosen = i == proposalIndex
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (chosen) c.accent.copy(alpha = 0.12f) else c.card)
+                                .clickable {
+                                    proposalIndex = i
+                                    route = alt
+                                }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                alt.durationText,
+                                color = if (chosen) c.accent else c.ink,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(alt.distanceText, color = c.sub, fontSize = 12.sp)
+                        }
+                    }
+
+                    Row(modifier = Modifier.padding(top = 10.dp)) {
+                        Text(
+                            "CANCEL",
+                            color = c.sub,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    proposals = emptyList()
+                                    route = null
+                                }
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                        )
+                        Text(
+                            "START",
+                            color = c.card,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(c.accent)
+                                .clickable {
+                                    navigating = true
+                                    stepFloor = 0
+                                }
+                                .padding(horizontal = 18.dp, vertical = 10.dp)
+                        )
+                    }
+                }
+            }
+
             // Trip readout — bottom right, sized to be read at a glance
-            if (route != null || routing) {
+            if (navigating && (route != null || routing)) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -494,7 +581,11 @@ fun MeridianScreen(
                             modifier = Modifier
                                 .padding(top = 8.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .clickable { route = null }
+                                .clickable {
+                                        route = null
+                                        proposals = emptyList()
+                                        navigating = false
+                                    }
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         )
                     }
@@ -914,6 +1005,8 @@ private fun GoogleMapPanel(
     bearing: Float,
     isNight: Boolean,
     route: com.ziyad.carlinkit.Route?,
+    navigating: Boolean = true,
+    distanceToTurn: Int = Int.MAX_VALUE,
     pendingPin: com.google.android.gms.maps.model.LatLng? = null,
     onMapTap: (com.google.android.gms.maps.model.LatLng) -> Unit = {}
 ) {
@@ -946,6 +1039,23 @@ private fun GoogleMapPanel(
         if (bearing != 0f) targetBearing = bearing
     }
 
+    // Preview: frame the entire route instead of following the car.
+    LaunchedEffect(route, navigating) {
+        val r = route
+        if (navigating || r == null || r.points.isEmpty()) return@LaunchedEffect
+        val bounds = com.google.android.gms.maps.model.LatLngBounds.builder().apply {
+            r.points.forEach { include(it) }
+        }.build()
+        try {
+            cameraPositionState.animate(
+                com.google.android.gms.maps.CameraUpdateFactory
+                    .newLatLngBounds(bounds, 120),
+                700
+            )
+        } catch (_: Throwable) {
+        }
+    }
+
     // Single long-lived loop: eases toward the latest target every frame
     // instead of restarting an animation per fix.
     LaunchedEffect(Unit) {
@@ -973,9 +1083,18 @@ private fun GoogleMapPanel(
                     currentBearing += diff * 0.10f
 
                     current = com.google.android.gms.maps.model.LatLng(lat, lng)
+                    // Lean into the road while navigating; sit flat otherwise.
+                    // Close in as a turn approaches so the junction is legible.
+                    val zoom = when {
+                        !navigating -> 16f
+                        distanceToTurn < 200 -> 18.5f
+                        else -> 17.5f
+                    }
+                    val tilt = if (navigating) 45f else 0f
                     cameraPositionState.position =
                         com.google.android.gms.maps.model.CameraPosition.Builder()
-                            .target(current).zoom(17f).bearing(currentBearing).tilt(0f).build()
+                            .target(current).zoom(zoom).bearing(currentBearing)
+                            .tilt(tilt).build()
                 }
             }
             kotlinx.coroutines.delay(16) // ~60fps
