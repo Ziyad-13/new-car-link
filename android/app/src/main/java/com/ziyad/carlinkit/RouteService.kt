@@ -107,7 +107,7 @@ object RouteService {
                     append("https://maps.googleapis.com/maps/api/directions/json")
                     append("?origin=").append(origin.latitude).append(',').append(origin.longitude)
                     append("&destination=").append(URLEncoder.encode(target, "UTF-8"))
-                    append("&mode=driving&alternatives=true")
+                    append("&mode=driving")
                     append("&language=ar&region=sa")
                     append("&key=").append(key)
                 }
@@ -125,7 +125,7 @@ object RouteService {
                 }
                 lastError = null
                 val arr = json.getJSONArray("routes")
-                (0 until minOf(arr.length(), 3)).mapNotNull { i ->
+                (0 until minOf(arr.length(), 1)).mapNotNull { i ->
                     parseRoute(arr.getJSONObject(i), query)
                 }
             } catch (t: Throwable) {
@@ -185,7 +185,6 @@ object RouteService {
                     append("?origin=").append(origin.latitude).append(',').append(origin.longitude)
                     append("&destination=").append(URLEncoder.encode(target, "UTF-8"))
                     append("&mode=driving")
-                    append("&alternatives=true")
                     // Keeps a bare place name anchored near the driver even if
                     // the Places lookup above was unavailable.
                     append("&location=").append(origin.latitude).append(',').append(origin.longitude)

@@ -122,7 +122,6 @@ fun MeridianScreen(
     var pendingName by remember { mutableStateOf<String?>(null) }
     // Routes offered but not yet accepted. Guidance only begins on START.
     var proposals by remember { mutableStateOf<List<com.ziyad.carlinkit.Route>>(emptyList()) }
-    var proposalIndex by remember { mutableStateOf(0) }
     var navigating by remember { mutableStateOf(false) }
     var guidance by remember {
         mutableStateOf<com.ziyad.carlinkit.NavigationTracker.Guidance?>(null)
@@ -158,7 +157,6 @@ fun MeridianScreen(
             val r = found.firstOrNull()
             routing = false
             proposals = found
-            proposalIndex = 0
             navigating = false
             // Stay inside the launcher on failure; offer the handoff, never force it.
             if (r != null) {
@@ -458,37 +456,23 @@ fun MeridianScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        proposals[proposalIndex].destinationName.substringBefore(",").trim(),
+                        proposals[0].destinationName.substringBefore(",").trim(),
                         color = c.ink,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(6.dp))
 
-                    // One row per alternative, so the trade-off is visible
-                    proposals.forEachIndexed { i, alt ->
-                        val chosen = i == proposalIndex
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (chosen) c.accent.copy(alpha = 0.12f) else c.card)
-                                .clickable {
-                                    proposalIndex = i
-                                    route = alt
-                                }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                alt.durationText,
-                                color = if (chosen) c.accent else c.ink,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(alt.distanceText, color = c.sub, fontSize = 12.sp)
-                        }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            proposals[0].durationText,
+                            color = c.accent,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(proposals[0].distanceText, color = c.sub, fontSize = 13.sp)
                     }
 
                     Row(modifier = Modifier.padding(top = 10.dp)) {
