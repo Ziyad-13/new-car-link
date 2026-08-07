@@ -1047,6 +1047,12 @@ private fun GoogleMapPanel(
         var currentBearing = 0f
         while (true) {
             val t = target
+            // Previewing: the camera belongs to the route framing, not to us.
+            if (!navigating) {
+                current = null
+                kotlinx.coroutines.delay(120)
+                continue
+            }
             if (t != null) {
                 val c = current
                 if (c == null) {
