@@ -401,44 +401,83 @@ fun MeridianScreen(
                 }
             }
 
-            // Turn instruction — top of the map, the one thing that must be
-            // readable in a single glance while moving.
+            // Manoeuvre board — full width, high contrast, one glance.
+            // Both Google and Apple give the next turn the whole top edge;
+            // a small corner card is the thing that made ours feel unlike them.
             guidance?.let { g ->
-                Row(
+                Column(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(
-                            start = if (fullscreenMap) 18.dp else 188.dp,
-                            top = 18.dp,
-                            end = 18.dp
+                            start = if (fullscreenMap) 10.dp else 188.dp,
+                            top = 10.dp,
+                            end = 10.dp
                         )
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(c.accent)
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(BoardGreen)
                 ) {
-                    Icon(
-                        maneuverIcon(g.maneuver),
-                        contentDescription = null,
-                        tint = c.card,
-                        modifier = Modifier.size(34.dp)
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    Column {
-                        Text(
-                            if (rerouting) "Recalculating…"
-                            else com.ziyad.carlinkit.NavigationTracker
-                                .formatDistance(g.distanceToTurnMeters),
-                            color = c.card,
-                            fontSize = if (rerouting) 16.sp else 22.sp,
-                            fontWeight = FontWeight.Bold
+                    Row(
+                        modifier = Modifier.padding(
+                            start = 18.dp, end = 18.dp, top = 14.dp, bottom = 12.dp
+                        ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            maneuverIcon(g.maneuver),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(52.dp)
                         )
-                        Text(
-                            g.instruction,
-                            color = c.card.copy(alpha = 0.85f),
-                            fontSize = 12.sp,
-                            maxLines = 2
-                        )
+                        Spacer(Modifier.width(18.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                if (rerouting) "Recalculating…"
+                                else com.ziyad.carlinkit.NavigationTracker
+                                    .formatDistance(g.distanceToTurnMeters),
+                                color = Color.White,
+                                fontSize = if (rerouting) 22.sp else 38.sp,
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 40.sp
+                            )
+                            Text(
+                                g.instruction,
+                                color = Color.White.copy(alpha = 0.92f),
+                                fontSize = 15.sp,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    // "then …" — the turn after this one
+                    g.nextManeuver?.let { next ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(BoardGreenDark)
+                                .padding(horizontal = 18.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "then",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 12.sp
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Icon(
+                                maneuverIcon(next),
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                g.nextInstruction.orEmpty(),
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 12.sp,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -507,70 +546,67 @@ fun MeridianScreen(
                 }
             }
 
-            // Trip readout — bottom right, sized to be read at a glance
-            if (navigating && (route != null || routing)) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 18.dp, bottom = 18.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(c.card)
-                        .border(1.dp, c.line, RoundedCornerShape(16.dp))
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    if (routing) {
-                        Text("Finding route…", color = c.sub, fontSize = 13.sp)
-                    } else route?.let { r ->
-                        // Minutes dominate: it is the one number that matters
-                        // while moving.
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                r.durationText.filter { it.isDigit() }
-                                    .ifBlank { r.durationText },
-                                color = c.ink,
-                                fontSize = 40.sp,
-                                fontFamily = FontFamily.Serif,
-                                lineHeight = 40.sp
+            // Arrival bar — remaining time, clock time of arrival, distance.
+            // Both apps put this along the bottom edge and keep it there for
+            // the whole trip; it answers "are we nearly there" without a tap.
+            if (navigating && route != null) {
+                route?.let { r ->
+                    val arrival = remember(r.durationSeconds) {
+                        val cal = java.util.Calendar.getInstance()
+                        cal.add(java.util.Calendar.SECOND, r.durationSeconds)
+                        SimpleDateFormat("h:mm a", Locale.getDefault()).format(cal.time)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(
+                                start = if (fullscreenMap) 10.dp else 188.dp,
+                                end = 10.dp,
+                                bottom = 10.dp
                             )
-                            Spacer(Modifier.width(6.dp))
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(c.card)
+                            .border(1.dp, c.line, RoundedCornerShape(18.dp))
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
                             Text(
-                                "min",
+                                r.durationText,
+                                color = c.ink,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                arrival + " · " + r.distanceText,
                                 color = c.sub,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 6.dp)
+                                fontSize = 12.sp
                             )
                         }
-                        Text(
-                            r.distanceText,
-                            color = c.accent,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        // Just the first part of the address — the full string
-                        // is unreadable while driving.
+                        Spacer(Modifier.weight(1f))
                         Text(
                             r.destinationName.substringBefore(",").trim(),
                             color = c.sub,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             maxLines = 1,
-                            modifier = Modifier.padding(top = 2.dp)
+                            modifier = Modifier.weight(2f, fill = false)
                         )
+                        Spacer(Modifier.width(16.dp))
                         Text(
                             "END",
-                            color = c.sub,
-                            fontSize = 9.sp,
+                            color = c.card,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
-                                .padding(top = 8.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(EndRed)
                                 .clickable {
-                                        route = null
-                                        proposals = emptyList()
-                                        navigating = false
-                                    }
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                    route = null
+                                    proposals = emptyList()
+                                    navigating = false
+                                }
+                                .padding(horizontal = 18.dp, vertical = 10.dp)
                         )
                     }
                 }
@@ -634,8 +670,7 @@ fun MeridianScreen(
                         }
                     }
                 }
-
-                pendingPin?.let { pin ->
+        pendingPin?.let { pin ->
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(13.dp))
@@ -1097,7 +1132,7 @@ private fun GoogleMapPanel(
         onMapClick = onMapTap,
         properties = com.google.maps.android.compose.MapProperties(
             // Blue dot showing where the car actually is
-            isMyLocationEnabled = true,
+            isMyLocationEnabled = !navigating,
             isBuildingEnabled = false,
             isTrafficEnabled = false,
             isIndoorEnabled = false,
@@ -1114,6 +1149,23 @@ private fun GoogleMapPanel(
             rotationGesturesEnabled = false
         )
     ) {
+        // A chevron pointing where the car is heading, as both apps show while
+        // navigating. The stock blue dot cannot convey direction.
+        if (navigating && latLon != null) {
+            com.google.maps.android.compose.Marker(
+                state = com.google.maps.android.compose.MarkerState(
+                    position = com.google.android.gms.maps.model.LatLng(
+                        latLon.first, latLon.second
+                    )
+                ),
+                icon = headingIcon(),
+                rotation = bearing,
+                anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f),
+                flat = true,
+                zIndex = 5f
+            )
+        }
+
         pendingPin?.let { pin ->
             com.google.maps.android.compose.Marker(
                 state = com.google.maps.android.compose.MarkerState(position = pin)
@@ -1145,6 +1197,10 @@ private fun GoogleMapPanel(
         }
     }
 }
+
+private val BoardGreen = Color(0xFF1E6B4F)
+private val BoardGreenDark = Color(0xFF17573F)
+private val EndRed = Color(0xFFB3453A)
 
 private const val NIGHT_MAP_STYLE = """[
   {"elementType":"geometry","stylers":[{"color":"#242f3e"}]},
@@ -1262,4 +1318,49 @@ private fun maneuverIcon(maneuver: String): ImageVector = when {
     maneuver.contains("merge", ignoreCase = true) -> Icons.Rounded.MergeType
     maneuver.contains("ramp", ignoreCase = true) -> Icons.Rounded.ForkRight
     else -> Icons.Rounded.Straight
+}
+
+/**
+ * The heading chevron, drawn rather than shipped as a bitmap so it stays crisp
+ * at any density and needs no drawable resource.
+ */
+@Composable
+private fun headingIcon(): com.google.android.gms.maps.model.BitmapDescriptor? {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    return remember {
+        try {
+            val size = with(density) { 46.dp.toPx() }.toInt()
+            val bmp = android.graphics.Bitmap.createBitmap(
+                size, size, android.graphics.Bitmap.Config.ARGB_8888
+            )
+            val canvas = android.graphics.Canvas(bmp)
+            val s = size.toFloat()
+
+            val body = android.graphics.Paint().apply {
+                isAntiAlias = true
+                color = android.graphics.Color.parseColor("#1A73E8")
+                style = android.graphics.Paint.Style.FILL
+            }
+            val edge = android.graphics.Paint().apply {
+                isAntiAlias = true
+                color = android.graphics.Color.WHITE
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = s * 0.06f
+            }
+
+            val path = android.graphics.Path().apply {
+                moveTo(s * 0.5f, s * 0.12f)
+                lineTo(s * 0.85f, s * 0.86f)
+                lineTo(s * 0.5f, s * 0.68f)
+                lineTo(s * 0.15f, s * 0.86f)
+                close()
+            }
+            canvas.drawPath(path, body)
+            canvas.drawPath(path, edge)
+
+            com.google.android.gms.maps.model.BitmapDescriptorFactory.fromBitmap(bmp)
+        } catch (_: Throwable) {
+            null
+        }
+    }
 }

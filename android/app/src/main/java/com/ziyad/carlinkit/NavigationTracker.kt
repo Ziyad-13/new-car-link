@@ -23,6 +23,9 @@ object NavigationTracker {
         val distanceToTurnMeters: Int,
         val stepIndex: Int,
         val isFinal: Boolean,
+        /** The manoeuvre after this one, for the "then …" line. */
+        val nextManeuver: String?,
+        val nextInstruction: String?,
         /** Metres from the route line — large values mean we have left it. */
         val offRouteMeters: Int
     )
@@ -72,6 +75,8 @@ object NavigationTracker {
             distanceToTurnMeters = haversine(position, step.end).toInt(),
             stepIndex = best,
             isFinal = best == route.steps.lastIndex,
+            nextManeuver = route.steps.getOrNull(best + 1)?.maneuver,
+            nextInstruction = route.steps.getOrNull(best + 1)?.instruction,
             offRouteMeters = offRoute.toInt()
         )
     }
