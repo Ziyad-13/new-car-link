@@ -210,11 +210,13 @@ fun MeridianScreen(
                 here,
                 r.destination.latitude.toString() + "," + r.destination.longitude.toString()
             )
-            if (fresh != null) {
-                route = fresh.copy(destinationName = r.destinationName)
-                stepFloor = 0
-            }
+            // Clear the flag *before* assigning route: that assignment
+            // restarts this effect and cancels us mid-line.
             rerouting = false
+            if (fresh != null) {
+                stepFloor = 0
+                route = fresh.copy(destinationName = r.destinationName)
+            }
         }
     }
 
@@ -442,7 +444,7 @@ fun MeridianScreen(
                                 lineHeight = 40.sp
                             )
                             Text(
-                                g.instruction,
+                                shortInstruction(g.instruction),
                                 color = Color.White.copy(alpha = 0.92f),
                                 fontSize = 15.sp,
                                 maxLines = 1
@@ -473,7 +475,7 @@ fun MeridianScreen(
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                g.nextInstruction.orEmpty(),
+                                shortInstruction(g.nextInstruction.orEmpty()),
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontSize = 12.sp,
                                 maxLines = 1
@@ -730,7 +732,7 @@ fun MeridianScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!navigating) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DestChip(
                         label = stringResource(R.string.nav_home),
                         icon = MesaIcons.Home,
@@ -1364,4 +1366,20 @@ private fun headingIcon(): com.google.android.gms.maps.model.BitmapDescriptor? {
             null
         }
     }
+}
+
+/**
+ * Directions appends advisories to instructions — "parts of this road may be
+ * closed at certain times", and similar. Useful on a web page, unreadable on a
+ * manoeuvre board at speed. Keep the instruction, drop the essay.
+ */
+private fun shortInstruction(raw: String): String {
+    if (raw.isBlank()) return raw
+    val cut = raw
+        .substringBefore(" قد ")
+        .substringBefore(" Destination ")
+        .substringBefore(" Pass by ")
+        .substringBefore(" (")
+        .trim()
+    return if (cut.length > 46) cut.take(44).trimEnd() + "…" else cut
 }
